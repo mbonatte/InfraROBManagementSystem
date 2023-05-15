@@ -70,8 +70,8 @@ def get_pareto_curve(inspections, maintenance_data, worst_IC, best_IC, time_bloc
     sort = np.argsort(F)[1]
     
     response = {}
-    response['Year'] = list(F[0][sort])
-    response['IC'] = list(F[1][sort])
+    response['Performance'] = list(F[0][sort])
+    response['Cost'] = list(F[1][sort])
     return response
     
     #F = np.array(F).T
