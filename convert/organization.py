@@ -94,6 +94,7 @@ class Organization(ABC):
                 df_inspections[column_name] = indicator_transformed
             except ValueError as e:
                 logging.warning(e)
+        return df_inspections
             
             
             

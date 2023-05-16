@@ -13,7 +13,6 @@ def get_converted_IC(inspections, properties, organization_name):
     
     organization = Organization.set_organization(organization_name)
     organization(df_properties).transform_performace_indicators(df_inspections)
-    
     response = df_inspections.to_dict('records')
     
     return response
