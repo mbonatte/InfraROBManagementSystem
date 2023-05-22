@@ -39,26 +39,30 @@ def convert_to_markov_organization(df, worst_IC, best_IC):
     return df_markov.astype('int', errors = 'ignore')
 
 
-def get_IC_through_time(csv_data, institution, worst_IC, best_IC, time_block, time_hoziron, asset_properties = None):
+def get_fitted_markov_model(data_markov_format, worst_IC, best_IC):
+    markov_model = MarkovContinous(worst_IC,
+                                   best_IC,
+                                   optimizer=True)
+    
+    markov_model.fit(data_markov_format['Initial'],
+                     data_markov_format['Time'],
+                     data_markov_format['Final'])
+    return markov_model
+
+def get_IC_through_time(inspections, institution, worst_IC, best_IC, time_block, time_hoziron, asset_properties = None):
     response = {}
     if institution == 'Generic':
-        buffer = io.StringIO(csv_data)
+        buffer = io.StringIO(inspections)
         df  = pd.read_csv(buffer, sep=',')
         data_markov_format = convert_to_markov(df, worst_IC, best_IC, time_block)
-        markov_model = MarkovContinous(worst_IC,
-                                       best_IC,
-                                       optimizer=True)
-        
-        markov_model.fit(data_markov_format['Initial'],
-                         data_markov_format['Time'],
-                         data_markov_format['Final'])
+        markov_model = get_fitted_markov_model(data_markov_format, worst_IC, best_IC)
 
         initial_IC = best_IC
         response['Year'] = list(range(0, time_hoziron + 1))
         response['IC'] = list(markov_model.get_mean_over_time(time_hoziron,
                                                            initial_IC))
     if institution == 'ASFiNAG':
-        buffer = io.StringIO(csv_data)
+        buffer = io.StringIO(inspections)
         df_inspections  = pd.read_csv(buffer, sep=';')
         buffer = io.StringIO(asset_properties)
         df_properties  = pd.read_csv(buffer, sep=';')
@@ -107,8 +111,5 @@ def fit_predict_model(variables, indicator):
     df = convert_to_markov_organization(df_standardized[['Section_Name','Date', indicator]],
                                         worst_IC=variables['worst_IC'],
                                         best_IC=variables['best_IC'])
-    model = MarkovContinous(worst_IC = variables['worst_IC'],
-                            best_IC = variables['best_IC'])
-
-    model.fit(df['Initial'],df['Time'],df['Final'])
-    return model
+                                        
+    return get_fitted_markov_model(df, variables['worst_IC'], variables['best_IC'])
