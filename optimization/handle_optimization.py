@@ -63,19 +63,47 @@ def get_pareto_curve(inspections, maintenance_data, worst_IC, best_IC, time_bloc
 
     res = optimization.minimize()
 
-    X = res.X
-    F = res.F
+    X = res.X               # Design space values
+    F = res.F               # Objective spaces
+    opt = res.opt           # The solutions as a Population object.
+    pop = res.pop           # The final Population
+    history = res.history   # The history of the algorithm. (only if save_history has been enabled during the algorithm initialization)
+
+
+    #print("# Design space values\n", X)
+    #print(problem.decode_binary_to_dict(X))
+    #print("# Objective spaces\n", F)
+    #print('# The solutions as a Population object (X)\n', opt.get("X"))
+    #print('# The solutions as a Population object (F)\n', opt.get("F"))
+    #print('# The final Population (X)\n = ', pop.get("X"))
+    #print('# The final Population (F)\n = ', pop.get("F"))
+    #print(history)
  
     F = np.array(F).T
     sort = np.argsort(F)[1]
     
     response = {}
+    
     response['Performance'] = list(F[0][sort])
     response['Cost'] = list(F[1][sort])
-    return response
+    response['Actions_schedule'] = [problem.decode_binary_to_dict(item) for item in X[sort]]
     
-    #F = np.array(F).T
-    #sort = np.argsort(F)[1]
+    response['Markov'] = []
+    performance_model = Performance(markov_model, maintenance_data)
+    for actions_schedule in response['Actions_schedule']:
+        result = {}
+        result['Time'] = list(range(0, time_hoziron + 1))
+        result['IC'] = list(performance_model.get_IC_over_time(time_horizon=time_hoziron,
+                                                                actions_schedule=actions_schedule
+                                                                )
+                            )
+        response['Markov'].append(result)
+    
+    response['Dummies'] = {}
+    response['Dummies']['Performance'] = list(np.array(pop.get("F")).T[0])
+    response['Dummies']['Cost'] = list(np.array(pop.get("F")).T[1])
+    print(response)
+    return response
 
     #plot_pareto_curve(F[0][sort], F[1][sort])
     #X = X[sort]
