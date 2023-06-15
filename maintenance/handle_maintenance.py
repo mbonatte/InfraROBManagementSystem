@@ -67,9 +67,10 @@ def predict_single_performance_index(variables):
     for indicator in indicators:
         try:
             print(indicator)
+            maintenance_data = extract_indicator(indicator, variables['maintenance_data'])
             indicator = f"{indicator}_{variables['institution']}"
             model = fit_predict_model(variables, indicator)
-            performance = Performance(model, variables['maintenance_data'])
+            performance = Performance(model, maintenance_data)
             variables['results'][indicator] = {}
             variables['results'][indicator]['Time'] = [i for i in range(variables['time_hoziron']+1)]
             variables['results'][indicator]['IC'] = list(performance.get_IC_over_time(variables['time_hoziron'],
@@ -89,5 +90,33 @@ def fit_predict_model(variables, indicator):
     df = convert_to_markov_organization(df_standardized[['Section_Name','Date', indicator]],
                                         worst_IC=variables['worst_IC'],
                                         best_IC=variables['best_IC'])
-                                        
     return get_fitted_markov_model(df, variables['worst_IC'], variables['best_IC'])
+
+
+def extract_indicator(indicator, actions):
+    final_data = []
+
+    for data in actions:
+        # Extract the indicator if it exists
+        pi_data = data.get(indicator)
+        if pi_data is None:
+            continue
+        
+        # Create the new dictionary with the desired structure
+        extracted_data = {
+            "name": data.get("name"),
+        }
+        
+        if "time_of_reduction" in pi_data:
+            extracted_data["time_of_reduction"] = pi_data["time_of_reduction"]
+        
+        if "reduction_rate" in pi_data:
+            extracted_data["reduction_rate"] = pi_data["reduction_rate"]
+        
+        if "improvement" in pi_data:
+            extracted_data["improvement"] = pi_data["improvement"]
+        
+        extracted_data["cost"] = data.get("cost")
+        
+        final_data.append(extracted_data)
+    return final_data
