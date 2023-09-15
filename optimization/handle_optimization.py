@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from prediction.markov import MarkovContinous
 from maintenance.performance import Performance
-from .problem import MyProblem
+from .problem import MaintenanceSchedulingProblem
 from .multi_objective_optimization import Multi_objective_optimization
 
 def convert_to_markov(df, worst_IC, best_IC, time_block):
@@ -56,7 +56,7 @@ def get_IC_through_time_maintenance(inspections, maintenance_data, maintenance_s
 
 def get_pareto_curve(inspections, maintenance_data, worst_IC, best_IC, time_block, time_hoziron):
     markov_model = get_markov_model(inspections, worst_IC, best_IC, time_block)
-    problem = MyProblem(markov_model, maintenance_data, time_hoziron)
+    problem = MaintenanceSchedulingProblem(markov_model, maintenance_data, time_hoziron)
 
     optimization = Multi_objective_optimization()
     optimization.set_problem(problem)
@@ -86,7 +86,7 @@ def get_pareto_curve(inspections, maintenance_data, worst_IC, best_IC, time_bloc
     
     response['Performance'] = list(F[0][sort])
     response['Cost'] = list(F[1][sort])
-    response['Actions_schedule'] = [problem.decode_binary_to_dict(item) for item in X[sort]]
+    response['Actions_schedule'] = [problem._decode_solution(item) for item in X[sort]]
     
     response['Markov'] = []
     performance_model = Performance(markov_model, maintenance_data)
@@ -111,4 +111,3 @@ def get_pareto_curve(inspections, maintenance_data, worst_IC, best_IC, time_bloc
 
     #plot_performances(problem.performance_model, actions)
     #plot_cost(problem, actions)
-
