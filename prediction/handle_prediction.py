@@ -24,18 +24,29 @@ def convert_to_markov(df, worst_IC, best_IC, time_block):
     return df_markov.astype('int', errors = 'ignore')
     
 
-def convert_to_markov_organization(df, worst_IC, best_IC):
+def convert_to_markov_organization(df, worst_IC, best_IC, time_block='year'):
+    df.loc[:, 'Date'] = pd.to_datetime(df["Date"], format="%d/%m/%Y")
+    
     column = df.keys()
     df_markov = pd.DataFrame(columns=['Initial','Time','Final'])
     road_sections = df[column[0]].unique()
+    
     for road_section in road_sections:
         section = df[df[column[0]]==road_section]
         section = section.sort_values(by=column[1])
+        
         for i in range(len(section)-1):
             if worst_IC > best_IC:
                 if section.iloc[i][2] <= section.iloc[i+1][2]:
-                    time_between = section.iloc[i+1][1] -  section.iloc[i][1]
+                    time_between = (section.iloc[i+1][1] -  section.iloc[i][1]).total_seconds()
+                    
+                    if time_block == 'month':
+                        time_between = round(time_between*3.8052e-7)
+                    if time_block == 'year':
+                        time_between = round(time_between*3.171e-8)
+                    
                     df_markov.loc[len(df_markov)] = [section.iloc[i][2], time_between, section.iloc[i+1][2]]
+                    
     return df_markov.astype('int', errors = 'ignore')
 
 
@@ -63,9 +74,9 @@ def get_IC_through_time(inspections, institution, worst_IC, best_IC, time_block,
                                                            initial_IC))
     if institution == 'ASFiNAG':
         buffer = io.StringIO(inspections)
-        df_inspections  = pd.read_csv(buffer, sep=';')
+        df_inspections  = pd.read_csv(buffer, sep=',')
         buffer = io.StringIO(asset_properties)
-        df_properties  = pd.read_csv(buffer, sep=';')
+        df_properties  = pd.read_csv(buffer, sep=',')
         organization = Organization.set_organization(institution)
         variables = {
                         'inspections': df_inspections,
