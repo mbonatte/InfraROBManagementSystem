@@ -95,6 +95,59 @@ def get_IC_through_time(inspections, institution, worst_IC, best_IC, time_block,
     
     return response
 
+def get_IC_through_time_for_road(road, institution, worst_IC, best_IC, time_block, time_hoziron, asset_properties = None):
+    response = {}
+
+    if institution == 'ASFiNAG':
+        organization = Organization.set_organization(institution)
+        variables = {
+                        'institution': institution,
+                        'organization': organization,
+                        'worst_IC': worst_IC,
+                        'best_IC': best_IC,
+                        'time_block': time_block,
+                        'time_hoziron': time_hoziron,
+                        'results': {}
+                     }
+    
+    markov_model = MarkovContinous(worst_IC, best_IC)
+
+    PI_B = [0.0186, 0.0256, 0.0113, 0.0420]
+    PI_CR = [0.0736, 0.1178, 0.1777, 0.3542]
+    PI_E = [0.0671, 0.0390, 0.0489, 0.0743]
+    PI_F = [0.1773, 0.2108, 0.1071, 0.0765]
+    PI_R = [0.1084, 0.0395, 0.0443, 0.0378]
+    
+    if road['hasFOS']:
+        PI_B = 1.1 * np.array(PI_B)
+        PI_CR = 1.2 * np.array(PI_B)
+    
+    df_road = pd.DataFrame(road['inspections'])
+    df_road.loc[:, 'Date'] = pd.to_datetime(df_road["Date"], format="%d/%m/%Y")
+    
+    df_road = df_road.sort_values(by='Date')
+    
+    thetas = {'Bearing_Capacity_ASFiNAG': PI_B,
+              'Cracking_ASFiNAG':PI_CR,
+              'Longitudinal_Evenness_ASFiNAG': PI_E,
+              'Transverse_Evenness_ASFiNAG': PI_F,
+              'Transverse_Evenness_ASFiNAG': PI_R}
+    
+    for key, theta in thetas.items():
+        initial_IC = df_road[key].iloc[-1]
+        markov_model.theta = theta
+        variables['results'][key] = {}
+        variables['results'][key]['Time'] = [i for i in range(variables['time_hoziron']+1)]
+        variables['results'][key]['IC'] = list(markov_model.get_mean_over_time(variables['time_hoziron'],
+                                                                               initial_IC))
+    
+    #predict(variables)
+        
+        
+    response = variables['results']
+    return response
+
+
 
 def predict(variables):
     df_predict = pd.DataFrame()
