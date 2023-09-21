@@ -130,7 +130,7 @@ def get_IC_through_time_for_road(road, institution, worst_IC, best_IC, time_bloc
     thetas = {'Bearing_Capacity_ASFiNAG': PI_B,
               'Cracking_ASFiNAG':PI_CR,
               'Longitudinal_Evenness_ASFiNAG': PI_E,
-              'Transverse_Evenness_ASFiNAG': PI_F,
+              'Skid_Resistance_ASFiNAG': PI_F,
               'Transverse_Evenness_ASFiNAG': PI_R}
     
     for key, theta in thetas.items():

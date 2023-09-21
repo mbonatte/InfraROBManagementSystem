@@ -1,10 +1,78 @@
 import io
+import json
 import numpy as np
 import pandas as pd
 from prediction.markov import MarkovContinous
 from prediction.handle_prediction import convert_to_markov, convert_to_markov_organization, get_fitted_markov_model
 from .performance import Performance
 from convert.organization import Organization
+
+from pathlib import Path
+MAIN_FOLDER = Path(__file__).parent.parent.resolve()
+
+def get_IC_through_time_maintenance_road(road, institution, maintenance_scenario, worst_IC, best_IC, time_block, time_hoziron):
+    path = MAIN_FOLDER / 'database/ActionsEffects.json'
+    with open(path, "r") as file:
+        maintenance_data = json.load(file)
+
+    response = {}
+
+                         
+    if institution == 'ASFiNAG':
+        organization = Organization.set_organization(institution)
+        variables = {
+                        'institution': institution,
+                        'organization': organization,
+                        'worst_IC': worst_IC,
+                        'best_IC': best_IC,
+                        'time_block': time_block,
+                        'time_hoziron': time_hoziron,
+                        'maintenance_data': maintenance_data,
+                        'actions_schedule': maintenance_scenario,
+                        'results': {}
+                     }
+    markov_model = MarkovContinous(worst_IC, best_IC)
+
+    PI_B = [0.0186, 0.0256, 0.0113, 0.0420]
+    PI_CR = [0.0736, 0.1178, 0.1777, 0.3542]
+    PI_E = [0.0671, 0.0390, 0.0489, 0.0743]
+    PI_F = [0.1773, 0.2108, 0.1071, 0.0765]
+    PI_R = [0.1084, 0.0395, 0.0443, 0.0378]
+    
+    if road['hasFOS']:
+        PI_B = 1.1 * np.array(PI_B)
+        PI_CR = 1.2 * np.array(PI_B)
+    
+    df_road = pd.DataFrame(road['inspections'])
+    df_road.loc[:, 'Date'] = pd.to_datetime(df_road["Date"], format="%d/%m/%Y")
+    
+    df_road = df_road.sort_values(by='Date')
+    
+    thetas = {'Bearing_Capacity': PI_B,
+              'Cracking':PI_CR,
+              'Longitudinal_Evenness': PI_E,
+              'Skid_Resistance': PI_F,
+              'Transverse_Evenness': PI_R}
+    
+    for key, theta in thetas.items():
+        indicator = key + '_ASFiNAG'
+        maintenance_data = extract_indicator(key, variables['maintenance_data'])
+        #print(indicator)
+        #print(maintenance_data)
+        initial_IC = df_road[indicator].iloc[-1]
+        markov_model.theta = theta
+        performance = Performance(markov_model, maintenance_data)
+        variables['results'][indicator] = {}
+        variables['results'][indicator]['Time'] = [i for i in range(variables['time_hoziron']+1)]
+        variables['results'][indicator]['IC'] = list(performance.get_IC_over_time(variables['time_hoziron'],
+                                                                            initial_IC=initial_IC,
+                                                                            actions_schedule=maintenance_scenario,
+                                                                            number_of_samples=100))
+    
+    #predict(variables)
+
+    response = variables['results']
+    return response
     
 def get_IC_through_time_maintenance(inspections, institution, maintenance_data, maintenance_scenario, worst_IC, best_IC, time_block, time_hoziron, asset_properties = None):
 
