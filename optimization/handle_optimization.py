@@ -115,7 +115,6 @@ def get_pareto_curve(inspections, maintenance_data, worst_IC, best_IC, time_bloc
     response['Dummies'] = {}
     response['Dummies']['Performance'] = list(np.array(pop.get("F")).T[0])
     response['Dummies']['Cost'] = list(np.array(pop.get("F")).T[1])
-    print(response)
     return response
 
 def get_pareto_curve_all_roads():

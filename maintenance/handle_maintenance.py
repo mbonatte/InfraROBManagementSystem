@@ -101,9 +101,9 @@ def get_IC_through_time_maintenance(inspections, institution, maintenance_data, 
                          
     if institution == 'ASFiNAG':
         buffer = io.StringIO(inspections)
-        df_inspections  = pd.read_csv(buffer, sep=';')
+        df_inspections  = pd.read_csv(buffer, sep=',')
         buffer = io.StringIO(asset_properties)
-        df_properties  = pd.read_csv(buffer, sep=';')
+        df_properties  = pd.read_csv(buffer, sep=',')
         organization = Organization.set_organization(institution)
         variables = {
                         'inspections': df_inspections,
@@ -134,7 +134,6 @@ def predict_single_performance_index(variables):
     indicators = variables['organization'].single_performance_index
     for indicator in indicators:
         try:
-            print(indicator)
             maintenance_data = extract_indicator(indicator, variables['maintenance_data'])
             indicator = f"{indicator}_{variables['institution']}"
             model = fit_predict_model(variables, indicator)
