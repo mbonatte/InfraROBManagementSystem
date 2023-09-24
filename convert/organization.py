@@ -71,12 +71,6 @@ class Organization(ABC):
             indicator_values = self.combine_peformance_indicators(indicator,df_inspections)
             #return indicator_values
             return self.standardize_values(indicator_values).astype(int)
-            
-    
-    def check_if_indicator_exist(self, indicator, df):
-        if indicator in df.columns:
-            return
-        df.insert(len(df.columns), indicator, 0)
         
     def transform_performace_indicators(self, df_inspections: pd.DataFrame):
         logging.debug(f'{self.__class__.__name__} | Performance Indicators')
@@ -85,7 +79,6 @@ class Organization(ABC):
                       }
         for indicator in indicators:
             try:
-                # self.check_if_indicator_exist(indicator, df_inspections)
                 indicator_transformed = self.transform_performace_indicator(indicator,
                                                                             df_inspections)
                 indicator_transformed = pd.Series(indicator_transformed)

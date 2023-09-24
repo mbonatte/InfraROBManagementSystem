@@ -81,7 +81,9 @@ class COST_354(organization.Organization):
                      - 0.0316)
         elif number == 2:
             PI_E = 0.816 * TP_IRI
-        return np.where(PI_E > 5, 5, PI_E)
+        PI_E = np.where(PI_E > 5, 5, PI_E)
+        PI_E = np.where(PI_E < 0, 0, PI_E)
+        return PI_E
 
     def transform_transversal_evenness(self, TP_TD, number=2):
         """
@@ -100,18 +102,18 @@ class COST_354(organization.Organization):
                     + 0.2142 * TP_TD)
         return np.where(PI_R > 5, 5, PI_R)
     
-    def transform_macro_texture(self, TP_T):
+    def transform_macro_texture(self, TP_T, street_category):
         """
         Transformation [1] is suitable for Motorway and Primary roads.
         Transformation [2] is suitable for Secondary roads.
         """
-        if self.properties['Street_Category'] == 'Motorway' or 'Primary':
-            PI_F = 6.6 - 5.3 * TP_T 
-        elif self.properties['Street_Category'] == 'Secondary':
-            PI_F = 7.0 - 6.9 * TP_T 
-        return np.where(PI_F > 5, 5, PI_F)
+        if street_category == 'Motorway' or 'Primary':
+            PI_T = 6.6 - 5.3 * TP_T 
+        elif street_category == 'Secondary':
+            PI_T = 7.0 - 6.9 * TP_T 
+        return np.where(PI_T > 5, 5, PI_T)
     
-    def transform_skid_resistance(self, TP_F, device='SFC'):
+    def transform_skid_resistance(self, TP_F, device):
         """
         Transformation [1] should only be used for SFC devices running at 60km/h.
         Transformation [2] should only be used for LFC devices running at 50km/h.
@@ -122,7 +124,7 @@ class COST_354(organization.Organization):
             PI_F = -13.875 * TP_F + 9.338
         return np.where(PI_F > 5, 5, PI_F)
     
-    def transform_bearing_capacity(self, TP_B, device='SCI_300', base='weak'):
+    def transform_bearing_capacity(self, TP_B, device, base):
         """
         """
         if device == 'R/D':
@@ -133,8 +135,8 @@ class COST_354(organization.Organization):
             PI_B = TP_B / 253
         return np.where(PI_B > 5, 5, PI_B)
     
-    def transform_cracking(self, TP_CR):
-        if self.properties['Street_Category'] == ('Highway' or 'Motorway'):
+    def transform_cracking(self, TP_CR, street_category):
+        if street_category == ('Highway' or 'Motorway'):
             PI_CR = 0.16 * TP_CR
         else:
             PI_CR = 0.1333 * TP_CR

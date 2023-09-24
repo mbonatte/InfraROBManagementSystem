@@ -77,6 +77,7 @@ class ASFiNAG(organization.Organization):
                          9.9286 - 14.286 * ZG_GR,
                          6.5 - 6.6667 * ZG_GR)
         ZW_GR = np.where(ZW_GR > 5, 5, ZW_GR)
+        ZW_GR = np.where(ZW_GR < 1, 1, ZW_GR)
         return ZW_GR
         
     def standardize_longitudinal_evenness(self, ZG_LE):
@@ -96,7 +97,9 @@ class ASFiNAG(organization.Organization):
         
     def bearing_capacity_condition_index(self, ZG_Tragf):
         """
-        chapter 4.2.3 and chapter 4.2.4.
+        4.3.6.3 Substanzteilwert Tragfähigkeit
+        
+        More info in chapter 4.2.3 and chapter 4.2.4.
         
         ZG_Tragf -> Theoretical load-bearing capacity
         SI_Tragf = SI_BC
@@ -106,16 +109,18 @@ class ASFiNAG(organization.Organization):
     
     def age_surface_condition_index(self, age, asphalt_thickness):
         """
+        4.3.6.1
         ZW_{Alter,As} -> Condition value age for asphalt pavements
         Alter_{Decke} -> Age of top layer [years]
         
         How to calculate the age? What is the time reference?
         """
         #Values in cm        
-        if asphalt_thickness > 2:
-            return 0.21 * age - 0.17
-        if asphalt_thickness <= 2:
-            return 0.30 * age - 0.17
+        ZW_Alter = np.where(asphalt_thickness > 2,
+                               0.21 * age - 0.17,
+                               0.30 * age - 0.17)
+        return ZW_Alter
+        
     
 ##############################################################################
     
@@ -124,7 +129,7 @@ class ASFiNAG(organization.Organization):
         ZW_SR -> rutting
         ZW_GR -> grip (or skid)
         """
-        PI_safety = max(ZW_SR, ZW_GR) + 0.1*min(ZW_SR, ZW_GR) - 0.1
+        PI_safety = np.maximum(ZW_SR, ZW_GR) + 0.1*np.minimum(ZW_SR, ZW_GR) - 0.1
         return np.where(PI_safety > 5, 5, PI_safety)
     
     def confort_condition_index(self, ZW_LE, ZW_OS):
@@ -132,14 +137,14 @@ class ASFiNAG(organization.Organization):
         ZW_LE -> longitudinal evenness
         ZW_OS -> surface damage
         """
-        PI_confort = (max(ZW_LE, 1 + 0.0021875 * ZW_OS**2)
-                      + 0.1*min(ZW_LE, 1 + 0.0021875 * ZW_OS**2) 
+        PI_confort = (np.maximum(ZW_LE, 1 + 0.0021875 * ZW_OS**2)
+                      + 0.1*np.minimum(ZW_LE, 1 + 0.0021875 * ZW_OS**2) 
                       - 0.1)
         return np.where(PI_confort > 5, 5, PI_confort)
     
     def functional_condition_index(self, PI_safety, PI_confort):
-        PI_functional = (max(PI_safety, PI_confort) 
-                         + 0.1*min(PI_safety, PI_confort) 
+        PI_functional = (np.maximum(PI_safety, PI_confort) 
+                         + 0.1*np.minimum(PI_safety, PI_confort) 
                          - 0.1)
         return np.where(PI_functional > 5, 5, PI_functional)
     
@@ -147,6 +152,7 @@ class ASFiNAG(organization.Organization):
     def surface_structural_condition_index(self, ZW_RI, ZW_OS, ZG_SR, 
                                    ZG_LE, age, asphalt_thickness):
         """
+        4.3.6.1
         ZW_RI -> cracking
         ZW_OS -> surface damage
         ZG_SR -> rutting
@@ -156,11 +162,19 @@ class ASFiNAG(organization.Organization):
         """
         ZW_AlterAS = self.age_surface_condition_index(age, asphalt_thickness)
         
-        return max(max(ZW_RI, ZW_OS) + 0.1*min(ZW_RI, ZW_OS)-0.1,
-                   max(min(1+0.00010938*ZG_SR**3, 5),
-                       min(1+0.03840988*ZG_LE**3, 5)),
-                   min(0.08*ZW_RI+0.61, 0.85)*ZW_AlterAS
-                   )
+        if isinstance(ZW_RI, np.ndarray):
+            max_ = np.maximum
+            min_ = np.minimum
+        else:
+            max_ = max
+            min_ = min
+            
+        SI_Decke = max_(max_(ZW_RI, ZW_OS) + 0.1*min_(ZW_RI, ZW_OS)-0.1,
+                       max_(min_(1+0.00010938*ZG_SR**3, 5),
+                           min_(1+0.03840988*ZG_LE**3, 5)),
+                       min_(0.08*ZW_RI+0.61, 0.85)*ZW_AlterAS
+                       )
+        return SI_Decke
     
     
     def theoretical_load_bearing_capacity(self):
@@ -193,8 +207,9 @@ class ASFiNAG(organization.Organization):
         Dicke_GebSchiten = 2
         
         if Dicke_Decke <= Dicke_GebSchiten:
-            return ((SI_Decke * Dicke_Decke + SI_Tragf * Dicke_GebSchiten)
-                    / (Dicke_Decke + Dicke_GebSchiten))
+            SI_gesamt = ((SI_Decke * Dicke_Decke + SI_Tragf * Dicke_GebSchiten)
+                         / (Dicke_Decke + Dicke_GebSchiten))
+            return SI_gesamt
         
     def global_condition_index(self, GI, SI, street_category):
         """
@@ -205,7 +220,7 @@ class ASFiNAG(organization.Organization):
             WSI = 0.89
         if street_category == 'country_road':
             WSI = 0.8
-        return max(WGI*GI, WSI*SI)
+        return np.maximum(WGI*GI, WSI*SI)
     
     
 ##############################################################################
