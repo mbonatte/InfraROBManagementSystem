@@ -57,8 +57,6 @@ def get_IC_through_time_maintenance_road(road, institution, maintenance_scenario
     for key, theta in thetas.items():
         indicator = key + '_ASFiNAG'
         maintenance_data = extract_indicator(key, variables['maintenance_data'])
-        #print(indicator)
-        #print(maintenance_data)
         initial_IC = df_road[indicator].iloc[-1]
         markov_model.theta = theta
         performance = Performance(markov_model, maintenance_data)
