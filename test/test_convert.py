@@ -4,10 +4,10 @@ import random
 import numpy as np
 import pandas as pd
 
-from convert.organization import Organization
+from InfraROBManagementSystem.convert.organization import Organization
 
-from convert.ASFiNAG import ASFiNAG
-from convert.COST_354 import COST_354
+from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
+from InfraROBManagementSystem.convert.COST_354 import COST_354
 
 class newOrganization(Organization):
     def single_performance_index(self):

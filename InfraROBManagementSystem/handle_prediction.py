@@ -1,7 +1,9 @@
 import io
 import numpy as np
 import pandas as pd
-from .markov import MarkovContinous
+
+from ams.prediction.markov import MarkovContinous
+
 from convert.organization import Organization
 
 def convert_to_markov(df, worst_IC, best_IC, time_block):

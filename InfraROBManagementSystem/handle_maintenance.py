@@ -2,19 +2,17 @@ import io
 import json
 import numpy as np
 import pandas as pd
-from prediction.markov import MarkovContinous
-from prediction.handle_prediction import convert_to_markov, convert_to_markov_organization, get_fitted_markov_model
-from .performance import Performance
+
+from ams.prediction.markov import MarkovContinous
+from ams.performance.performance import Performance
+
 from convert.organization import Organization
+from handle_prediction import convert_to_markov, convert_to_markov_organization, get_fitted_markov_model
 
 from pathlib import Path
 MAIN_FOLDER = Path(__file__).parent.parent.resolve()
 
-def get_IC_through_time_maintenance_road(road, institution, maintenance_scenario, worst_IC, best_IC, time_block, time_hoziron):
-    path = MAIN_FOLDER / 'database/ActionsEffects.json'
-    with open(path, "r") as file:
-        maintenance_data = json.load(file)
-
+def get_IC_through_time_maintenance_road(road, institution, maintenance_scenario, maintenance_data, worst_IC, best_IC, time_block, time_hoziron):
     response = {}
 
                          

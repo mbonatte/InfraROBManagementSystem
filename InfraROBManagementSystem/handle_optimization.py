@@ -4,10 +4,10 @@ import json
 import numpy as np
 import pandas as pd
 
-from prediction.markov import MarkovContinous
-from maintenance.performance import Performance
-from .problem import MaintenanceSchedulingProblem
-from .multi_objective_optimization import Multi_objective_optimization
+from ams.prediction.markov import MarkovContinous
+from ams.performance.performance import Performance
+from ams.optimization.problem import MaintenanceSchedulingProblem
+from ams.optimization.multi_objective_optimization import Multi_objective_optimization
 
 class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
