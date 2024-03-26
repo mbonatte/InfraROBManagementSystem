@@ -48,7 +48,10 @@ class Organization(ABC):
     
     def calculate_PI_from_TC(self, indicator, value):
         return self.transformation_functions[indicator](value)
-    
+        
+    def get_combined_indicator(self, combined_indicator, all_indicators, **kwargs):
+        indicators = [all_indicators[indicator] for indicator in self.combined_performance_index[combined_indicator]]
+        return self.combination_functions[combined_indicator](*indicators, **kwargs)
     
     def combine_peformance_indicators(self,indicator,df_inspections,to_suffix=True):
         logging.debug(f'Combining | {indicator}')

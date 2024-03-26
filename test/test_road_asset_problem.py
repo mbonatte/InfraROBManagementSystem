@@ -1,12 +1,14 @@
 import unittest
 import random
-import numpy as np
 
+import numpy as np
+import pandas as pd
 
 from ams.prediction.markov import MarkovContinous
 from ams.performance.performance import Performance
 from ams.optimization.multi_objective_optimization import Multi_objective_optimization
 
+from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
 from InfraROBManagementSystem.optimization.problem import InfraROBRoadProblem
 
 
@@ -19,13 +21,16 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         PI_E = [0.0671, 0.0390, 0.0489, 0.0743]
         PI_F = [0.1773, 0.2108, 0.1071, 0.0765]
         PI_R = [0.1084, 0.0395, 0.0443, 0.0378]
+        PI_SD = [0.1, 0.1, 0.1, 0.1] ######
 
         #Mapping thetas and indicators
         thetas = {'Bearing_Capacity': PI_B,
                   'Cracking':PI_CR,
                   'Longitudinal_Evenness': PI_E,
                   'Skid_Resistance': PI_F,
-                  'Transverse_Evenness': PI_R}
+                  'Transverse_Evenness': PI_R,
+                  'Surface_Defects': PI_SD
+                  }
 
         # Set actions database
         actions = [{"name": 'action_1',
@@ -70,7 +75,15 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
             filtered_actions = InfraROBRoadProblem.extract_indicator(key, actions)
             performance_models[key] = Performance(markov, filtered_actions)
 
-        self.problem = InfraROBRoadProblem(performance_models, time_horizon=20)
+        df_properties = pd.DataFrame({'Section_Name': ['road_1'],
+                              'Asphalt_Thickness': [3],
+                              'Street_Category': ['highway'],
+                              'Age': ['01/01/2013'],
+                              })
+
+        organization = ASFiNAG(df_properties)
+        
+        self.problem = InfraROBRoadProblem(performance_models, organization, time_horizon=20)
 
         self.action_binary = np.array([0, 0] * 5)
 
@@ -106,14 +119,23 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
 
     def test_calc_area_under_curve(self):
         random.seed(1)
-        performance = self.problem._evaluate_performance([np.array([0, 0] * 5)])[0]
-        area_under_curve = self.problem._calc_area_under_curve([performance])[0]
+        performance = self.problem._evaluate_performance([np.array([0, 0] * 5)])
+        performance = self.problem._calc_all_indicators(performance)
+        area_under_curve = self.problem._calc_area_under_curve(performance)[0]
 
         self.assertAlmostEqual(area_under_curve['Bearing_Capacity'], 23.7, delta=1e-5)
         self.assertAlmostEqual(area_under_curve['Cracking'], 40., delta=1e-5)
         self.assertAlmostEqual(area_under_curve['Longitudinal_Evenness'], 36, delta=1e-5)
         self.assertAlmostEqual(area_under_curve['Skid_Resistance'], 55.5, delta=1e-5)
         self.assertAlmostEqual(area_under_curve['Transverse_Evenness'], 41.5, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Surface_Defects'], 31.4, delta=1e-5)
+        
+        self.assertAlmostEqual(area_under_curve['Safety'], 57.55, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Comfort'], 36.012823125, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Functional'], 59.0532510625, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Surface_Structural'], 41.45920330144, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Structural'], 32.579601650719994, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Global'], 59.0532510625, delta=1e-5)
 
         random.seed(1)
         performance = self.problem._evaluate_performance([self.action_binary])[0]
@@ -156,14 +178,23 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
     
     def test_calc_max_indicator(self):
         random.seed(1)
-        performance = self.problem._evaluate_performance([np.array([0, 0] * 5)])[0]
-        max_indicator = self.problem._calc_max_indicator([performance])[0]
+        performance = self.problem._evaluate_performance([np.array([0, 0] * 5)])
+        performance = self.problem._calc_all_indicators(performance)
+        max_indicator = self.problem._calc_max_indicator(performance)[0]
 
         self.assertAlmostEqual(max_indicator['Bearing_Capacity'], 1.3, delta=1e-5)
         self.assertAlmostEqual(max_indicator['Cracking'], 3, delta=1e-5)
         self.assertAlmostEqual(max_indicator['Longitudinal_Evenness'], 2.3, delta=1e-5)
         self.assertAlmostEqual(max_indicator['Skid_Resistance'], 3.8, delta=1e-5)
         self.assertAlmostEqual(max_indicator['Transverse_Evenness'], 2.8, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Surface_Defects'], 2.3, delta=1e-5)
+        
+        self.assertAlmostEqual(max_indicator['Safety'], 3.98, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Comfort'], 2.3011571875, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Functional'], 4.11011571875, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Surface_Structural'], 3.13, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Structural'], 2.215, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Global'], 4.11011571875, delta=1e-5)
 
         random.seed(1)
         performance = self.problem._evaluate_performance([self.action_binary])[0]
@@ -184,7 +215,8 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         self.assertAlmostEqual(indicators_diff[1][0], -2, delta=1e-5)
         self.assertAlmostEqual(indicators_diff[2][0], -2.7, delta=1e-5)
         self.assertAlmostEqual(indicators_diff[3][0], -1.2, delta=1e-5)
-        self.assertAlmostEqual(indicators_diff[4][0], -2.2, delta=1e-5)
+        self.assertAlmostEqual(indicators_diff[4][0], -2.7, delta=1e-5)
+        self.assertAlmostEqual(indicators_diff[5][0], -2.2, delta=1e-5)
 
         random.seed(1)
         performance = self.problem._evaluate_performance([self.action_binary])[0]
@@ -194,14 +226,15 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         self.assertAlmostEqual(indicators_diff[1][0], -2.3, delta=1e-5)
         self.assertAlmostEqual(indicators_diff[2][0], -2.8, delta=1e-5)
         self.assertAlmostEqual(indicators_diff[3][0], -1.6, delta=1e-5)
-        self.assertAlmostEqual(indicators_diff[4][0], -2.8, delta=1e-5)
+        self.assertAlmostEqual(indicators_diff[4][0], -2.5, delta=1e-5)
+        self.assertAlmostEqual(indicators_diff[5][0], -2.8, delta=1e-5)
 
     def test_evaluate(self):
         out = {}
         random.seed(1)
         self.problem._evaluate([self.action_binary], out)
 
-        self.assertAlmostEqual(out['F'][0][0], 52.5, delta=1e-5)
+        self.assertAlmostEqual(out['F'][0][0], 54.53496715625, delta=1e-5)
         self.assertAlmostEqual(out['F'][1][0], 16.0243, places=3)  
 
 if __name__ == '__main__':

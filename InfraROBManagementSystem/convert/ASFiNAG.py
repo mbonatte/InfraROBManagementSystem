@@ -225,6 +225,19 @@ class ASFiNAG(organization.Organization):
     
 ##############################################################################
     
+    def get_conbined_indicators(self, single_indicators, age, asphalt_thickness, street_category):
+        indicators_prediction = single_indicators
+        for indicator in ['Safety', 'Comfort', 'Functional', 
+                          {'Surface_Structural': {'age': age, 'asphalt_thickness': asphalt_thickness}}, 
+                          'Structural', 
+                          {'Global': {'street_category': street_category}}]:
+            if isinstance(indicator, str):
+                indicators_prediction[indicator] = self.get_combined_indicator(indicator, indicators_prediction)
+            elif isinstance(indicator, dict):
+                for indicator_name, params in indicator.items():
+                    indicators_prediction[indicator_name] = self.get_combined_indicator(indicator_name, indicators_prediction, **params)
+        return indicators_prediction
+    
     def combine_indicator(self, indicator,df_inspections,to_suffix=True):
         suffix = ''
         if to_suffix:

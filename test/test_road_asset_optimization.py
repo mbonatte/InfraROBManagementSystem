@@ -1,12 +1,14 @@
 import unittest
 import random
-import numpy as np
 
+import numpy as np
+import pandas as pd
 
 from ams.prediction.markov import MarkovContinous
 from ams.performance.performance import Performance
 from ams.optimization.multi_objective_optimization import Multi_objective_optimization
 
+from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
 from InfraROBManagementSystem.optimization.problem import InfraROBRoadProblem
 
 class Test_ASFiNAG_optimization(unittest.TestCase):
@@ -18,13 +20,16 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
         PI_E = [0.0671, 0.0390, 0.0489, 0.0743]
         PI_F = [0.1773, 0.2108, 0.1071, 0.0765]
         PI_R = [0.1084, 0.0395, 0.0443, 0.0378]
+        PI_SD = [0.1, 0.1, 0.1, 0.1] ######
 
         #Mapping thetas and indicators
         thetas = {'Bearing_Capacity': PI_B,
                   'Cracking':PI_CR,
                   'Longitudinal_Evenness': PI_E,
                   'Skid_Resistance': PI_F,
-                  'Transverse_Evenness': PI_R}
+                  'Transverse_Evenness': PI_R,
+                  'Surface_Defects': PI_SD
+                  }
 
         # Set actions database
         actions = [{"name": 'action_1',
@@ -92,9 +97,17 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
             filtered_actions = InfraROBRoadProblem.extract_indicator(key, actions)
             performance_models[key] = Performance(markov, filtered_actions)
 
-        time_horizon = 20
+        
+        df_properties = pd.DataFrame({'Section_Name': ['road_1'],
+                              'Asphalt_Thickness': [3],
+                              'Street_Category': ['highway'],
+                              'Age': ['01/01/2013'],
+                              })
 
-        problem = InfraROBRoadProblem(performance_models, time_horizon)
+        organization = ASFiNAG(df_properties)
+        
+        problem = InfraROBRoadProblem(performance_models, organization, time_horizon=20)
+        
 
         self.optimization = Multi_objective_optimization()
         self.optimization.verbose = False
@@ -114,14 +127,18 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
         cost = res.F.T[1][sort]
         best_action = self.optimization.problem._decode_solution(res.X[sort][-1])
 
-        action = {'11': 'action_2', '13': 'action_1', '17': 'action_2', '7': 'action_1'}
+        action = {'14': 'action_2', '15': 'action_1', '19': 'action_2', '9': 'action_2'}
         self.assertEqual(action, best_action)
         
-        self.assertAlmostEqual(performance[0], 52.2, places=3)
-        self.assertAlmostEqual(performance[-1], 29.6, places=3)
+        self.assertAlmostEqual(performance[0], 56.174471468750006, places=3)
+        self.assertAlmostEqual(performance[-1], 32.88600853125, places=3)
 
-        self.assertAlmostEqual(cost[0], 0, places=3)
-        self.assertAlmostEqual(cost[-1], 11.924212034276763, places=5)
+        self.assertAlmostEqual(cost[0], 3.124196703132048, places=3)
+        self.assertAlmostEqual(cost[-1], 11.023121183436736, places=5)
+        
+        prediction = self.optimization.problem._get_performances(best_action)
+        max_global_indicator = self.optimization.problem._calc_max_global_indicator([prediction])[0]
+        self.assertAlmostEqual(max_global_indicator, 2.06035, places=5)
         
 
     def test_budget_constrain(self):
@@ -137,24 +154,28 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
         self.assertTrue(max(cost) < max_budget)
 
     def test_global_max_indicator_constrain(self):
+        self.optimization._set_termination({'name':'n_gen', 'n_max_gen':5})
         max_global_indicator = 3
         self.optimization.problem.max_global_indicator = max_global_indicator
 
         np.random.seed(1)
         random.seed(1)
-        res = self.optimization.minimize()  
+        res = self.optimization.minimize()
+        sort = np.argsort(res.F.T)[1]
 
-        most_expensive_solution = res.X[-1]
+        most_expensive_solution = res.X[sort][-1]
         actions_schedule = self.optimization.problem._decode_solution(most_expensive_solution)
         performance = self.optimization.problem._get_performances(actions_schedule)
         max_global_indicator = self.optimization.problem._calc_max_global_indicator([performance])
         self.assertTrue(max_global_indicator <= 3)
         
-        cheapest_solution = res.X[0]
+        cheapest_solution = res.X[sort][0]
         actions_schedule = self.optimization.problem._decode_solution(cheapest_solution)
         performance = self.optimization.problem._get_performances(actions_schedule)
         max_global_indicator = self.optimization.problem._calc_max_global_indicator([performance])
         self.assertTrue(max_global_indicator <= 3)
+        
+        self.optimization._set_termination({'name':'n_gen', 'n_max_gen':3})
 
     def test_single_indicators_constrain(self):
         max_indicators = {'Bearing_Capacity': 2,

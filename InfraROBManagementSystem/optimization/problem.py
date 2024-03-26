@@ -16,7 +16,7 @@ class InfraROBRoadProblem(MultiIndicatorProblem):
     Maintenance scheduling optimization problem.
     """
     
-    def __init__(self, performance_models, time_horizon, **kwargs):
+    def __init__(self, performance_models, organization, time_horizon, **kwargs):
         """
         Initialize the problem.
 
@@ -24,6 +24,25 @@ class InfraROBRoadProblem(MultiIndicatorProblem):
             time_horizon: Planning horizon
         """
         super().__init__(performance_models, time_horizon, **kwargs)
+        self.organization = organization
+        self.age = 10
+        self.asphalt_thickness = 5
+        self.street_category = 'highway'
+    
+    def _calc_all_indicators(self, performances):
+        for indicators_prediction in performances:
+            indicators_prediction = self.organization.get_conbined_indicators(indicators_prediction, self.age, self.asphalt_thickness, self.street_category)
+        return performances
+        
+    def _calc_global_area_under_curve(self, performances):
+        performances = self._calc_all_indicators(performances)
+        results = self._calc_area_under_curve(performances)
+        return np.array([result['Global'] for result in results])
+        
+    def _calc_max_global_indicator(self, performances):
+        performances = self._calc_all_indicators(performances)
+        results = self._calc_max_indicator(performances)
+        return np.array([result['Global'] for result in results])
 
         
 class NetworkTrafficProblem(NetworkProblem):
