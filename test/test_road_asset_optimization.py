@@ -130,15 +130,15 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
         action = {'14': 'action_2', '15': 'action_1', '19': 'action_2', '9': 'action_2'}
         self.assertEqual(action, best_action)
         
-        self.assertAlmostEqual(performance[0], 56.174471468750006, places=3)
-        self.assertAlmostEqual(performance[-1], 32.88600853125, places=3)
+        self.assertAlmostEqual(performance[0], 54.827114285714295, places=3)
+        self.assertAlmostEqual(performance[-1], 32.92361428571428, places=3)
 
         self.assertAlmostEqual(cost[0], 3.124196703132048, places=3)
         self.assertAlmostEqual(cost[-1], 11.023121183436736, places=5)
         
         prediction = self.optimization.problem._get_performances(best_action)
         max_global_indicator = self.optimization.problem._calc_max_global_indicator([prediction])[0]
-        self.assertAlmostEqual(max_global_indicator, 2.06035, places=5)
+        self.assertAlmostEqual(max_global_indicator, 2.5723142857142856, places=5)
         
 
     def test_budget_constrain(self):

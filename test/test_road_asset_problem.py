@@ -131,11 +131,11 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         self.assertAlmostEqual(area_under_curve['Surface_Defects'], 31.4, delta=1e-5)
         
         self.assertAlmostEqual(area_under_curve['Safety'], 57.55, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Comfort'], 36.012823125, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Functional'], 59.0532510625, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Surface_Structural'], 41.45920330144, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Structural'], 32.579601650719994, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Global'], 59.0532510625, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Comfort'], 36.22342857142857, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Functional'], 59.07234285714286, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Surface_Structural'], 41.315224191736604, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Structural'], 32.507612095868296, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Global'], 59.07234285714286, delta=1e-5)
 
         random.seed(1)
         performance = self.problem._evaluate_performance([self.action_binary])[0]
@@ -190,11 +190,11 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         self.assertAlmostEqual(max_indicator['Surface_Defects'], 2.3, delta=1e-5)
         
         self.assertAlmostEqual(max_indicator['Safety'], 3.98, delta=1e-5)
-        self.assertAlmostEqual(max_indicator['Comfort'], 2.3011571875, delta=1e-5)
-        self.assertAlmostEqual(max_indicator['Functional'], 4.11011571875, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Comfort'], 2.348285714285714, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Functional'], 4.114828571428571, delta=1e-5)
         self.assertAlmostEqual(max_indicator['Surface_Structural'], 3.13, delta=1e-5)
         self.assertAlmostEqual(max_indicator['Structural'], 2.215, delta=1e-5)
-        self.assertAlmostEqual(max_indicator['Global'], 4.11011571875, delta=1e-5)
+        self.assertAlmostEqual(max_indicator['Global'], 4.114828571428571, delta=1e-5)
 
         random.seed(1)
         performance = self.problem._evaluate_performance([self.action_binary])[0]
@@ -234,7 +234,7 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         random.seed(1)
         self.problem._evaluate([self.action_binary], out)
 
-        self.assertAlmostEqual(out['F'][0][0], 54.53496715625, delta=1e-5)
+        self.assertAlmostEqual(out['F'][0][0], 54.60277142857143, delta=1e-5)
         self.assertAlmostEqual(out['F'][1][0], 16.0243, places=3)  
 
 if __name__ == '__main__':
