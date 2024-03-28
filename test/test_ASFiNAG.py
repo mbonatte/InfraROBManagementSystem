@@ -76,6 +76,8 @@ class TestASFiNAG(unittest.TestCase):
         result = self.organization.standardize_age_of_asphalt_structure(np.flip(age), asphalt_thickness)
         np.testing.assert_array_almost_equal(result, [5,5,2.83,1,1])
     
+    ############################################################
+    
     def test_comfort_safety_functional(self):
         # safety_condition_index
         ZW_SR = 3
@@ -199,6 +201,46 @@ class TestASFiNAG(unittest.TestCase):
         GW = self.organization.calculate_global_index(GI, np.flip(SI), street_category)
         np.testing.assert_array_almost_equal(GW, [4. , 3.2, 3. , 4. , 5. ])
     
+    ############################################################
+    
+    def test_safety_from_ASFiNAG_database(self):
+        pass
+    
+    def test_comfort_from_ASFiNAG_database(self):
+        ZW_LE_ASFiNAG = np.array([2.367, 1.167,1.144,1.100,1.100])
+        ZW_OS_ASFiNAG = np.array([1.005, 1.729,2.948,5.000,3.241])
+        PI_comfort_ASFiNAG = np.array([2.367, 1.182,2.098,5.000,2.445])
+        
+        PI_comfort = self.organization.calculate_comfort_index(ZW_LE_ASFiNAG, ZW_OS_ASFiNAG)
+        np.testing.assert_array_almost_equal(PI_comfort, PI_comfort_ASFiNAG, decimal=1)
+    
+    def test_functional_from_ASFiNAG_database(self):
+        PI_safety_ASFiNAG = [1.862,1.921,1.929,1.822,2.110,1.860,2.534,2.125,2.196,1.869,1.809,1.817,1.809]
+        PI_confort_ASFiNAG = [1.811, 1.644, 2.544, 2.522, 2.411, 2.800, 3.644, 3.089, 4.673, 2.200, 2.024, 1.989, 4.653]
+        PI_functional_ASFiNAG = [1.943,1.985,2.637,2.604,2.522,2.886,3.797,3.202,4.793,2.287,2.105,2.071,4.734]        
+        
+        PI_functional = self.organization.calculate_functional_index(PI_safety_ASFiNAG, PI_confort_ASFiNAG)
+        
+        np.testing.assert_array_almost_equal(PI_functional_ASFiNAG, PI_functional, decimal=3)
+    
+    def test_surface_structural_index_from_ASFiNAG_database(self):
+        pass
+    
+    def test_structural_index_from_ASFiNAG_database(self):
+        pass
+    
+    def test_global_index_from_ASFiNAG_database(self):
+        GI_ASFiNAG = np.array([2.974,2.017,1.992,2.013,1.998,2.018,1.992,2.550])
+        SI_ASFiNAG = np.array([3.854,5.000,1.471,1.456,2.582,1.459,1.405,5.000])
+        GW_ASFiNAG = np.array([3.430,4.450,1.992,2.013,2.298,2.018,1.992,4.450])
+        
+        street_category = 'highway'
+        
+        GW = self.organization.calculate_global_index(GI_ASFiNAG, SI_ASFiNAG, street_category)
+        np.testing.assert_array_almost_equal(GW, GW_ASFiNAG, decimal=4)
+    
+    ############################################################
+    
     def test_combine_indicator_simple(self):
         # Setup a simple DataFrame for testing
         df_inspections = pd.DataFrame({
@@ -262,7 +304,6 @@ class TestASFiNAG(unittest.TestCase):
         result = self.organization.combine_indicator(indicator, df_inspections)
         np.testing.assert_allclose(result, expected, rtol=1e-05)
         
-    
     def test_transform_performace_indicators(self):
         indicators = self.organization.single_performance_index.keys()
         

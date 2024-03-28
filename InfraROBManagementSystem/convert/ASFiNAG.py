@@ -288,7 +288,7 @@ class ASFiNAG(Organization):
             (SI_Decke * asphalt_surface_thickness + SI_Tragf * total_pavement_thickness)
             / (asphalt_surface_thickness + total_pavement_thickness)
         )
-        return SI_gesamt
+        return np.clip(SI_gesamt, 1, 5)
         
     def calculate_global_index(self, GI, SI, street_category):
         """
@@ -299,7 +299,7 @@ class ASFiNAG(Organization):
             WSI = 0.89
         if street_category == 'country_road':
             WSI = 0.8
-        return np.maximum(WGI*GI, WSI*SI)
+        return np.clip(np.maximum(WGI*GI, WSI*SI), 1, 5)
     
 ##############################################################################
     
