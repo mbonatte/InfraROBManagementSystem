@@ -182,7 +182,6 @@ class ASFiNAG(Organization):
                             0.30 * Alter_Decke - 0.17)
         return np.clip(ZW_Alter, 1, 5)
         
-    
 ##############################################################################
     
     def calculate_safety_index(self, ZW_SR, ZW_GR):
@@ -211,9 +210,10 @@ class ASFiNAG(Organization):
         
         #Convert Condition index (ZW_OS) to Conditional value (ZG_OS)
         ZG_OS = (ZW_OS - 1) / 0.0875
+        ZW_OS = 1 + 0.0021875 * ZG_OS ** 2
         
-        comfort_index = (np.maximum(ZW_LE, 1 + 0.0021875 * ZG_OS ** 2)
-                         + 0.1 * np.minimum(ZW_LE, 1 + 0.0021875 * ZG_OS ** 2) 
+        comfort_index = (np.maximum(ZW_LE, ZW_OS)
+                         + 0.1 * np.minimum(ZW_LE, ZW_OS) 
                          - 0.1)
         return np.clip(comfort_index, 1, 5)
     
@@ -292,7 +292,7 @@ class ASFiNAG(Organization):
         
     def calculate_global_index(self, GI, SI, street_category):
         """
-        GI = CSI
+        GI = OSI
         """
         WGI = 1
         if street_category == 'highway':
@@ -300,7 +300,6 @@ class ASFiNAG(Organization):
         if street_category == 'country_road':
             WSI = 0.8
         return np.maximum(WGI*GI, WSI*SI)
-    
     
 ##############################################################################
     
@@ -324,92 +323,55 @@ class ASFiNAG(Organization):
         
         return indicators_prediction
     
-    def combine_indicator(self, indicator,df_inspections,to_suffix=True):
-        suffix = ''
-        if to_suffix:
-            suffix = '_ASFiNAG'
+##############################################################################
+    
+    def _prepare_arguments(self, row, columns, properties_needed, suffix):
+        arguments = []
+        for column in columns:
+            arguments.append(row[column + suffix] if column + suffix in row else row[column])
         
-        function = self.combination_functions[indicator]
-        
-        if indicator == 'Safety':
-            return np.array(list(map(function, 
-                            df_inspections['Transverse_Evenness'+suffix],
-                            df_inspections['Skid_Resistance'+suffix])))
-        
-        if indicator == 'Comfort':
-            return np.array(list(map(function, 
-                            df_inspections['Longitudinal_Evenness'+suffix],
-                            df_inspections['Surface_Defects'+suffix])))
-        
-        if indicator == 'Functional':
-            return np.array(list(map(function, 
-                            df_inspections['Safety'+suffix],
-                            df_inspections['Comfort'+suffix])))
-        
-        if indicator == 'Surface_Structural':
-            final_result = []
-            
-            for index, row in df_inspections.iterrows():
-                filtered_by_name = self.properties[self.properties['Section_Name'] == row['Section_Name']]
-                
-                age = filtered_by_name['Age'].values[0]
-                asphalt_thickness = filtered_by_name['Asphalt_Thickness'].values[0]
-                
-                from datetime import datetime
-                
-                time_diff = datetime.strptime(age, "%d/%m/%Y") - datetime.strptime(row['Date'], "%d/%m/%Y")
-                time_diff = time_diff.days/365
-            
-                step_result = function(row['Cracking'],
-                                       row['Surface_Defects'+suffix],
-                                       row['Transverse_Evenness'],
-                                       row['Longitudinal_Evenness'+suffix],
-                                       time_diff,
-                                       asphalt_thickness)
-                
-                final_result.append(step_result)
-            
-            return np.array(final_result)
-            
-            # return np.array(list(map(function, 
-                            # df_inspections['Cracking'],
-                            # df_inspections['Surface_Defects'+suffix],
-                            # df_inspections['Transverse_Evenness'],
-                            # df_inspections['Longitudinal_Evenness'+suffix],
-                            # self.street_age)))
-        
-        if indicator == 'Structural':
-            final_result = []
-            
-            for index, row in df_inspections.iterrows():
-                filtered_by_name = self.properties[self.properties['Section_Name'] == row['Section_Name']]
-                
-                asphalt_thickness = filtered_by_name['Asphalt_Thickness'].values[0]
-                total_pavement_thickness = filtered_by_name['Total_Pavement_Thickness'].values[0]
-                
-                step_result = function(
-                    row['Surface_Structural'+suffix],
-                    row['Bearing_Capacity'+suffix],
-                    asphalt_thickness,
-                    total_pavement_thickness
-                )
-                
-                final_result.append(step_result)
-            
-            return np.array(final_result)
-        
-        if indicator == 'Global':
-            final_result = []
-            for index, row in df_inspections.iterrows():
-                filtered_by_name = self.properties[self.properties['Section_Name'] == row['Section_Name']]
-                street_category = filtered_by_name['Street_Category'].values[0]
-                
-                result = function(row['Functional'+suffix],
-                                  row['Structural'+suffix],
-                                  street_category)
+        if properties_needed:
+            section_properties = self.properties.loc[self.properties['Section_Name'] == row['Section_Name']].iloc[0]
+            for prop in properties_needed:
+                if prop == 'Age' and 'Date' in row:
+                    arguments.append(self._calculate_dates_difference_in_years(section_properties[prop], row['Date']))
+                else:
+                    arguments.append(section_properties[prop])
 
-                final_result.append(result)
-            return np.array(final_result)
+        return arguments
+
+    def _combine_indicator(self, df_inspections, indicator, columns, properties_needed=[], suffix=''):
+        function = self.combination_functions[indicator]
+        if suffix:
+            columns = self._add_suffix(columns, suffix)
+
+        results = []
+        for _, row in df_inspections.iterrows():
+            arguments = self._prepare_arguments(row, columns, properties_needed, suffix)
+            result = function(*arguments)
+            results.append(result)
+
+        return np.array(results)
+    
+    def combine_indicator(self, indicator,df_inspections,to_suffix=True):
+        suffix = '_ASFiNAG' if to_suffix else ''
+        
+        indicator_config = {
+            'Safety': (['Transverse_Evenness', 'Skid_Resistance'], []),
+            'Comfort': (['Longitudinal_Evenness', 'Surface_Defects'], []),
+            'Functional': (['Safety', 'Comfort'], []),
+            'Surface_Structural': (['Cracking', 'Surface_Defects', 'Transverse_Evenness', 'Longitudinal_Evenness'], ['Age', 'Asphalt_Thickness']),
+            'Structural': (['Surface_Structural', 'Bearing_Capacity'], ['Asphalt_Thickness', 'Total_Pavement_Thickness']),
+            'Global': (['Functional', 'Structural'], ['Street_Category']),
+        }
+        
+        if indicator in indicator_config:
+            columns, properties_needed = indicator_config[indicator]
+            return self._combine_indicator(df_inspections, indicator, columns, properties_needed, suffix)
+        else:
+            raise ValueError(f"Unknown indicator: {indicator}")
+
+##############################################################################
             
     def theoretical_load_bearing_capacity(self):
         """

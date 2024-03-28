@@ -1,5 +1,8 @@
 import logging
 from abc import ABC, abstractmethod 
+
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -47,6 +50,14 @@ class Organization(ABC):
     def combined_performance_index(self):
         """Abstract property to define how single performance indicators are combined."""
         pass
+    
+    def _add_suffix(self, columns, suffix):
+        return [f"{column}{suffix}" for column in columns]
+    
+    def _calculate_dates_difference_in_years(self, start_date_str, end_date_str):
+        start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+        end_date = datetime.strptime(end_date_str, "%d/%m/%Y")
+        return round((end_date - start_date).days / 365)
     
     def calculate_PI_from_TC(self, indicator, value):
         return self.transformation_functions[indicator](value)
