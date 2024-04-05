@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 import numpy as np
-import pandas as pd
-
 
 class Organization(ABC):
     """
@@ -30,12 +28,12 @@ class Organization(ABC):
                                  'COST_354': COST_354.COST_354}
         return list_of_organizations[organization]
         
-    def __init__(self, properties: pd.DataFrame):
+    def __init__(self, properties):
         """
         Initializes the Organization with the given properties.
 
         Parameters:
-            properties (pd.DataFrame): A dataframe containing properties relevant to the organization.
+            properties: containing properties relevant to the organization.
         """
         self.properties = properties
     
@@ -74,21 +72,19 @@ class Organization(ABC):
     
     def transform_performace_indicator(self,
                                          indicator: str, 
-                                         df_inspections: pd.DataFrame):
+                                         inspections: list):
         logging.debug(f'{self.__class__.__name__} | {indicator}')
         indicators = {**self.single_performance_index, 
                       **self.combined_performance_index}
         if type(indicators[indicator]) == str:
-            inspections_values = df_inspections[indicators[indicator]].astype(float)
+            inspections_values = np.array(inspections[indicators[indicator]])
             indicator_values = self.calculate_PI_from_TC(indicator, inspections_values)
-            #return indicator_values
             return self.standardize_values(indicator_values).astype(int)
         else:
-            indicator_values = self.combine_peformance_indicators(indicator,df_inspections)
-            #return indicator_values
+            indicator_values = self.combine_peformance_indicators(indicator,inspections)
             return self.standardize_values(indicator_values).astype(int)
         
-    def transform_performace_indicators(self, df_inspections: pd.DataFrame):
+    def transform_performace_indicators(self, inspections):
         logging.debug(f'{self.__class__.__name__} | Performance Indicators')
         indicators = {**self.single_performance_index, 
                       **self.combined_performance_index
@@ -96,15 +92,13 @@ class Organization(ABC):
         for indicator in indicators:
             try:
                 indicator_transformed = self.transform_performace_indicator(indicator,
-                                                                            df_inspections)
-                indicator_transformed = pd.Series(indicator_transformed)
-                indicator_transformed.index = df_inspections.index
+                                                                            inspections)
                 column_name = f'{indicator}_{self.__class__.__name__}'
-                df_inspections[column_name] = indicator_transformed
+                inspections[column_name] = indicator_transformed
             except ValueError as e:
                 logging.warning(e)
         
-        return df_inspections
+        return inspections
             
     def standardize_values(self, indicator_values):
         conditions = [indicator_values < 1.5,

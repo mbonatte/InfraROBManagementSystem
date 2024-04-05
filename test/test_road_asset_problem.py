@@ -2,7 +2,6 @@ import unittest
 import random
 
 import numpy as np
-import pandas as pd
 
 from ams.prediction.markov import MarkovContinous
 from ams.performance.performance import Performance
@@ -75,11 +74,11 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
             filtered_actions = InfraROBRoadProblem.extract_indicator(key, actions)
             performance_models[key] = Performance(markov, filtered_actions)
 
-        df_properties = pd.DataFrame({'Section_Name': ['road_1'],
+        df_properties = {'Section_Name': ['road_1'],
                               'Asphalt_Thickness': [3],
                               'Street_Category': ['highway'],
                               'Age': ['01/01/2013'],
-                              })
+                              }
 
         organization = ASFiNAG(df_properties)
         

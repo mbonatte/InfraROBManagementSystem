@@ -2,22 +2,21 @@ import unittest
 import random
 
 import numpy as np
-import pandas as pd
 
 from InfraROBManagementSystem.convert.COST_354 import COST_354
       
 class TestCOST_354(unittest.TestCase):
 
     def setUp(self):
-        df_properties = pd.DataFrame({'Section_Name': ['road_1', 'road_2'],
+        df_properties = {'Section_Name': ['road_1', 'road_2'],
                                        'Asphalt_Thickness': [3, 4],
                                        'Street_Category': ['Primary', 'Secondary'],
                                        'Age': ['01/01/2013', '01/01/2010'],
-                                       })
+                                       }
         
         self.organization = COST_354(df_properties)
         
-        self.df_inspections = pd.DataFrame({'Section_Name': ['road_1', 'road_2'],
+        self.df_inspections = {'Section_Name': ['road_1', 'road_2'],
                                             'Date': ['01/01/2013', '01/01/2010'],
                                             'Cracking': [0, 20],
                                             'Surface_Defects': [0, 30],
@@ -25,7 +24,7 @@ class TestCOST_354(unittest.TestCase):
                                             'Longitudinal_Evenness': [1, 3],
                                             'Skid_Resistance': [.75, 0.6],
                                             'Bearing_Capacity': [.5, 8]
-                                           })
+                                           }
         
         
     def test_transformation_functions(self):

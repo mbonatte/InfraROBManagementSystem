@@ -331,7 +331,9 @@ class ASFiNAG(Organization):
             arguments.append(row[column + suffix] if column + suffix in row else row[column])
         
         if properties_needed:
-            section_properties = self.properties.loc[self.properties['Section_Name'] == row['Section_Name']].iloc[0]
+            index = self.properties['Section_Name'].index(row['Section_Name'])
+            section_properties = {key: self.properties[key][index] for key in self.properties}
+            #section_properties = self.properties.loc[self.properties['Section_Name'] == row['Section_Name']].iloc[0]
             for prop in properties_needed:
                 if prop == 'Age' and 'Date' in row:
                     arguments.append(self._calculate_dates_difference_in_years(section_properties[prop], row['Date']))
@@ -340,14 +342,16 @@ class ASFiNAG(Organization):
 
         return arguments
 
-    def _combine_indicator(self, df_inspections, indicator, columns, properties_needed=[], suffix=''):
+    def _combine_indicator(self, inspections, indicator, columns, properties_needed=[], suffix=''):
         function = self.combination_functions[indicator]
         if suffix:
             columns = self._add_suffix(columns, suffix)
 
         results = []
-        for _, row in df_inspections.iterrows():
-            arguments = self._prepare_arguments(row, columns, properties_needed, suffix)
+        
+        for i in range(len(next(iter(inspections.values())))):
+            row_data = {key: inspections[key][i] for key in inspections}
+            arguments = self._prepare_arguments(row_data, columns, properties_needed, suffix)
             result = function(*arguments)
             results.append(result)
 

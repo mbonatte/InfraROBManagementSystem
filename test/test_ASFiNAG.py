@@ -2,23 +2,22 @@ import unittest
 import random
 
 import numpy as np
-import pandas as pd
 
 from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
 
 class TestASFiNAG(unittest.TestCase):
 
     def setUp(self):
-        df_properties = pd.DataFrame({'Section_Name': ['road_1', 'road_2'],
+        df_properties = {'Section_Name': ['road_1', 'road_2'],
                                        'Asphalt_Thickness': [3, 4],
                                        'Total_Pavement_Thickness': [10, 12],
                                        'Street_Category': ['highway', 'country_road'],
                                        'Age': ['01/01/2013', '01/01/2010'],
-                                       })
+                                       }
         
         self.organization = ASFiNAG(df_properties)
         
-        self.df_inspections = pd.DataFrame({'Section_Name': ['road_1', 'road_2'],
+        self.df_inspections = {'Section_Name': ['road_1', 'road_2'],
                                             'Date': ['01/01/2014', '01/01/2011'],
                                             'Cracking': [0, 20],
                                             'Surface_Defects': [0, 30],
@@ -26,7 +25,7 @@ class TestASFiNAG(unittest.TestCase):
                                             'Longitudinal_Evenness': [1, 3],
                                             'Skid_Resistance': [.75, 0.6],
                                             'Bearing_Capacity': [.5, 8]
-                                           })
+                                           }
         
     def test_standardize_functions_single_value(self):    
         ZG_SR = np.array(10)
@@ -243,10 +242,10 @@ class TestASFiNAG(unittest.TestCase):
     
     def test_combine_indicator_simple(self):
         # Setup a simple DataFrame for testing
-        df_inspections = pd.DataFrame({
+        df_inspections = {
             'Transverse_Evenness_ASFiNAG': [1, 2, 3],
             'Skid_Resistance_ASFiNAG': [1, 3, 5]
-        })
+        }
         indicator = 'Safety'
         columns = ['Transverse_Evenness', 'Skid_Resistance']
         properties_needed = []
@@ -257,17 +256,17 @@ class TestASFiNAG(unittest.TestCase):
     
     def test_combine_indicator(self):
         # Setup a simple DataFrame for testing
-        df_inspections = pd.DataFrame({
+        df_inspections = {
             'Transverse_Evenness_ASFiNAG': [1, 2, 3],
             'Skid_Resistance_ASFiNAG': [1, 3, 5],
             'Cracking_ASFiNAG': [1, 3, 5],
             'Surface_Defects_ASFiNAG': [1, 2, 3],
             'Longitudinal_Evenness_ASFiNAG': [1, 3, 5],
             'Bearing_Capacity_ASFiNAG': [1, 3, 5],
-        })
+        }
         
-        df_inspections = df_inspections.assign(Section_Name=['road_1', 'road_2', 'road_1'])
-        df_inspections = df_inspections.assign(Date=['01/01/2014', '01/01/2011', '01/01/2013'])
+        df_inspections['Section_Name'] =['road_1', 'road_2', 'road_1']
+        df_inspections['Date'] = ['01/01/2014', '01/01/2011', '01/01/2013']
         
         indicator = 'Safety'
         expected = np.array([1, 3.1, 5])
@@ -279,8 +278,8 @@ class TestASFiNAG(unittest.TestCase):
         result = self.organization.combine_indicator(indicator, df_inspections)
         np.testing.assert_allclose(result, expected, rtol=1e-05)
         
-        df_inspections = df_inspections.assign(Safety_ASFiNAG=[1, 3 ,5])
-        df_inspections = df_inspections.assign(Comfort_ASFiNAG=[1, 2 ,4])
+        df_inspections['Safety_ASFiNAG'] = [1, 3 ,5]
+        df_inspections['Comfort_ASFiNAG'] = [1, 2 ,4]
         indicator = 'Functional'
         expected = np.array([1, 3.1, 5])
         result = self.organization.combine_indicator(indicator, df_inspections)
@@ -291,14 +290,14 @@ class TestASFiNAG(unittest.TestCase):
         result = self.organization.combine_indicator(indicator, df_inspections)
         np.testing.assert_allclose(result, expected, rtol=1e-05)
         
-        df_inspections = df_inspections.assign(Surface_Structural_ASFiNAG=[1, 3 ,5])
+        df_inspections['Surface_Structural_ASFiNAG'] = [1, 3 ,5]
         indicator = 'Structural'
         expected = np.array([1, 3, 5])
         result = self.organization.combine_indicator(indicator, df_inspections)
         np.testing.assert_allclose(result, expected, rtol=1e-05)
         
-        df_inspections = df_inspections.assign(Functional_ASFiNAG=[1, 3 ,5])
-        df_inspections = df_inspections.assign(Structural_ASFiNAG=[1, 2 ,4])
+        df_inspections['Functional_ASFiNAG'] = [1, 3 ,5]
+        df_inspections['Structural_ASFiNAG'] = [1, 2 ,4]
         indicator = 'Global'
         expected = np.array([1, 3, 5])
         result = self.organization.combine_indicator(indicator, df_inspections)

@@ -2,7 +2,6 @@ import unittest
 import random
 
 import numpy as np
-import pandas as pd
 
 from InfraROBManagementSystem.convert.organization import Organization
 
@@ -19,7 +18,6 @@ class TestOrganization(unittest.TestCase):
 
     def setUp(self):
         self.organization = newOrganization({})
-        
         
     def test_standardize_values(self):
         indicator_values = np.array([0.5,
