@@ -333,7 +333,6 @@ class ASFiNAG(Organization):
         if properties_needed:
             index = self.properties['Section_Name'].index(row['Section_Name'])
             section_properties = {key: self.properties[key][index] for key in self.properties}
-            #section_properties = self.properties.loc[self.properties['Section_Name'] == row['Section_Name']].iloc[0]
             for prop in properties_needed:
                 if prop == 'Age' and 'Date' in row:
                     arguments.append(self._calculate_dates_difference_in_years(section_properties[prop], row['Date']))
