@@ -25,14 +25,10 @@ class InfraROBRoadProblem(MultiIndicatorProblem):
         """
         super().__init__(performance_models, time_horizon, **kwargs)
         self.organization = organization
-        self.age = 10
-        self.asphalt_thickness = 5
-        self.total_pavement_thickness = 5
-        self.street_category = 'highway'
     
     def _calc_all_indicators(self, performances):
         for indicators_prediction in performances:
-            indicators_prediction = self.organization.get_conbined_indicators(indicators_prediction, self.age, self.asphalt_thickness, self.total_pavement_thickness, self.street_category)
+            indicators_prediction = self.organization.get_combined_indicators(indicators_prediction)
         return performances
         
     def _calc_global_area_under_curve(self, performances):

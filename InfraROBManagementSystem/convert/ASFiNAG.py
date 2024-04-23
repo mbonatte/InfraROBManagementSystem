@@ -1,3 +1,4 @@
+from typing import List
 from .organization import Organization
 import numpy as np
 
@@ -41,40 +42,8 @@ class ASFiNAG(Organization):
         'Global': ['Functional', 'Structural'],
     }
                                 
-    
-    
-    def __init__(self, properties):
-        super().__init__(properties)
-        self.asphalt_surface_thickness = properties.get('Asphalt_Thickness', 0)
-        self.street_category = properties.get('Street_Category', '')
-        self.street_age = properties.get('Age', 0)
-        
-        # Define transformation functions for single performance indicators
-        self.transformation_functions = {
-            'Cracking': self.standardize_crack,
-            'Surface_Defects': self.standardize_surface_damage,
-            'Transverse_Evenness': self.standardize_transverse_evenness,
-            'Longitudinal_Evenness': self.standardize_longitudinal_evenness,
-            'Skid_Resistance': self.standardize_skid_resistance,
-            'Bearing_Capacity': self.standardize_bearing_capacity,
-        }
-        
-        # Define combination functions for combined performance indicators
-        self.combination_functions = {
-            'Safety': self.calculate_safety_index,
-            'Comfort': self.calculate_comfort_index,
-            'Functional': self.calculate_functional_index,
-            'Surface_Structural': self.calculate_surface_structural_index,
-            'Structural': self.calculate_structural_index,
-            'Global': self.calculate_global_index,
-        }
-    
-    def convert_indicator(self, indicator):
-        return self.standardize_function[indicator]
-
-##############################################################################
-
-    def standardize_transverse_evenness(self, ZG_SR):
+    @staticmethod
+    def standardize_transverse_evenness(ZG_SR):
         """
         Convert the tecnical parameter to condition index.
         
@@ -85,7 +54,8 @@ class ASFiNAG(Organization):
         ZW_SR = 1 + 0.175 * ZG_SR
         return np.clip(ZW_SR, 1, 5)
     
-    def standardize_skid_resistance(self, ZG_GR):
+    @staticmethod
+    def standardize_skid_resistance(ZG_GR):
         """
         Convert the tecnical parameter to condition index.
         
@@ -98,7 +68,8 @@ class ASFiNAG(Organization):
                          6.5 - 6.6667 * ZG_GR)
         return np.clip(ZW_GR, 1, 5)
         
-    def standardize_longitudinal_evenness(self, ZG_LE):
+    @staticmethod
+    def standardize_longitudinal_evenness(ZG_LE):
         """
         Convert the tecnical parameter to condition index.
         
@@ -109,7 +80,8 @@ class ASFiNAG(Organization):
         ZW_LE = 1 + 0.7778 * ZG_LE
         return np.clip(ZW_LE, 1, 5)
     
-    def standardize_crack(self, ZG_RI):
+    @staticmethod
+    def standardize_crack(ZG_RI):
         """
         Convert the tecnical parameter to condition index.
         
@@ -120,7 +92,8 @@ class ASFiNAG(Organization):
         ZW_RI = 1 + 0.35 * ZG_RI
         return np.clip(ZW_RI, 1, 5)
     
-    def standardize_surface_damage(self, ZG_OS):
+    @staticmethod
+    def standardize_surface_damage(ZG_OS):
         """
         Convert the tecnical parameter to condition index.
         
@@ -131,7 +104,8 @@ class ASFiNAG(Organization):
         ZW_OS = 1 + 0.0875 * ZG_OS
         return np.clip(ZW_OS, 1, 5)
         
-    def standardize_bearing_capacity(self, ZG_Tragf):
+    @staticmethod
+    def standardize_bearing_capacity(ZG_Tragf):
         """
         Convert the tecnical parameter to condition index.
         
@@ -151,7 +125,8 @@ class ASFiNAG(Organization):
         SI_Tragf = 1 + 0.35 * ZG_Tragf
         return np.clip(SI_Tragf, 1, 5)
     
-    def standardize_age_of_asphalt_structure(self, Alter_Decke, asphalt_surface_thickness):
+    @staticmethod
+    def standardize_age_of_asphalt_structure(Alter_Decke, asphalt_surface_thickness):
         """
         Convert the age of the surface (ceiling) asphalt pavements to condition index.
         
@@ -181,10 +156,9 @@ class ASFiNAG(Organization):
                             0.21 * Alter_Decke - 0.17,
                             0.30 * Alter_Decke - 0.17)
         return np.clip(ZW_Alter, 1, 5)
-        
-##############################################################################
     
-    def calculate_safety_index(self, ZW_SR, ZW_GR):
+    @staticmethod
+    def calculate_safety_index(ZW_SR, ZW_GR):
         """
         Combine condition indexes.
         
@@ -197,7 +171,8 @@ class ASFiNAG(Organization):
         safety_index = np.maximum(ZW_SR, ZW_GR) + 0.1 * np.minimum(ZW_SR, ZW_GR) - 0.1
         return np.clip(safety_index, 1, 5)
     
-    def calculate_comfort_index(self, ZW_LE, ZW_OS):
+    @staticmethod
+    def calculate_comfort_index(ZW_LE, ZW_OS):
         """
         Combine condition indexes.
         
@@ -217,7 +192,8 @@ class ASFiNAG(Organization):
                          - 0.1)
         return np.clip(comfort_index, 1, 5)
     
-    def calculate_functional_index(self, GI_Sicherheit, GI_Komfort):
+    @staticmethod
+    def calculate_functional_index(GI_Sicherheit, GI_Komfort):
         """
         Combine condition indexes.
         
@@ -231,7 +207,40 @@ class ASFiNAG(Organization):
                             + 0.1 * np.minimum(GI_Sicherheit, GI_Komfort) 
                             - 0.1)
         return np.clip(functional_index, 1, 5)
-       
+    
+    def __init__(self, properties):
+        super().__init__(properties)
+        self.name = properties.get('name', '')
+        self.asphalt_surface_thickness = properties['asphalt_surface_thickness']
+        self.total_pavement_thickness = properties['total_pavement_thickness']
+        self.street_category = properties['street_category']
+        self.age = properties['age']
+        
+        # Define transformation functions for single performance indicators
+        self.transformation_functions = {
+            'Cracking': self.standardize_crack,
+            'Surface_Defects': self.standardize_surface_damage,
+            'Transverse_Evenness': self.standardize_transverse_evenness,
+            'Longitudinal_Evenness': self.standardize_longitudinal_evenness,
+            'Skid_Resistance': self.standardize_skid_resistance,
+            'Bearing_Capacity': self.standardize_bearing_capacity,
+        }
+        
+        # Define combination functions for combined performance indicators
+        self.combination_functions = {
+            'Safety': self.calculate_safety_index,
+            'Comfort': self.calculate_comfort_index,
+            'Functional': self.calculate_functional_index,
+            'Surface_Structural': self.calculate_surface_structural_index,
+            'Structural': self.calculate_structural_index,
+            'Global': self.calculate_global_index,
+        }
+    
+    def convert_indicator(self, indicator):
+        return self.standardize_function[indicator]
+        
+##############################################################################
+    
     def calculate_surface_structural_index(self, ZW_RI, ZW_OS, ZW_SR, 
                                            ZW_LE, Alter_Decke, asphalt_surface_thickness):
         """
@@ -303,16 +312,35 @@ class ASFiNAG(Organization):
     
 ##############################################################################
     
-    def get_conbined_indicators(self, 
-                                indicators_prediction, 
-                                age, 
-                                asphalt_surface_thickness, 
-                                total_pavement_thickness,
-                                street_category):
-        for indicator in ['Safety', 'Comfort', 'Functional', 
-                          {'Surface_Structural': {'Alter_Decke': age, 'asphalt_surface_thickness': asphalt_surface_thickness}}, 
-                          {'Structural': {'asphalt_surface_thickness': asphalt_surface_thickness, 'total_pavement_thickness': total_pavement_thickness}}, 
-                          {'Global': {'street_category': street_category}}]:
+    def get_combined_indicators(self, 
+                                indicators_prediction):
+        indicators = [
+            'Safety', 
+            'Comfort', 
+            'Functional', 
+            {
+                'Surface_Structural': 
+                {
+                    'Alter_Decke': self.age, 
+                    'asphalt_surface_thickness': self.asphalt_surface_thickness
+                }
+            }, 
+            {
+                'Structural': 
+                {
+                    'asphalt_surface_thickness': self.asphalt_surface_thickness, 
+                    'total_pavement_thickness': self.total_pavement_thickness
+                }
+            }, 
+            {
+                'Global': 
+                {
+                    'street_category': self.street_category
+                }
+            }
+        ]
+        
+        for indicator in indicators:
 
             if isinstance(indicator, str):
                 indicators_prediction[indicator] = self.get_combined_indicator(indicator, indicators_prediction)
@@ -329,19 +357,34 @@ class ASFiNAG(Organization):
         arguments = []
         for column in columns:
             arguments.append(row[column + suffix] if column + suffix in row else row[column])
-        
         if properties_needed:
-            index = self.properties['Section_Name'].index(row['Section_Name'])
-            section_properties = {key: self.properties[key][index] for key in self.properties}
+            section_properties = {key: self.properties[key] for key in self.properties}
             for prop in properties_needed:
-                if prop == 'Age' and 'Date' in row:
-                    arguments.append(self._calculate_dates_difference_in_years(section_properties[prop], row['Date']))
-                else:
-                    arguments.append(section_properties[prop])
+                arguments.append(section_properties[prop])
 
         return arguments
 
-    def _combine_indicator(self, inspections, indicator, columns, properties_needed=[], suffix=''):
+    def _combine_indicator(
+        self, 
+        inspections: dict, 
+        indicator: str, 
+        columns: List[str], 
+        properties_needed: List[str] = [], 
+        suffix: str = ''
+    ) -> np.ndarray:
+        """
+        Combines indicator values from inspections data into a single value for each indicator.
+        
+        Args:
+            inspections (dict): A dictionary containing the inspections data.
+            indicator (str): The name of the indicator to combine.
+            columns (List[str]): A list of column names to use for combining the indicator values.
+            properties_needed (List[str], optional): A list of property names needed for combining the indicator values. Defaults to an empty list.
+            suffix (str, optional): A suffix to add to the column names. Defaults to an empty string.
+        
+        Returns:
+            np.array: An array of combined indicator values.
+        """
         function = self.combination_functions[indicator]
         if suffix:
             columns = self._add_suffix(columns, suffix)
@@ -356,23 +399,40 @@ class ASFiNAG(Organization):
 
         return np.array(results)
     
-    def combine_indicator(self, indicator,df_inspections,to_suffix=True):
+    def combine_indicator(self, indicator, inspections, to_suffix=True):
+        """
+        Combines indicator values from inspections data into a single value for each indicator.
+        
+        Args:
+            indicator (str): The name of the indicator to combine.
+            df_inspections (dict): A dictionary containing the inspections data.
+            to_suffix (bool, optional): If True, a '_ASFiNAG' suffix will be added to the column names. Defaults to True.
+        
+        Returns:
+            np.array: An array of combined indicator values.
+        
+        Raises:
+            ValueError: If the indicator is not in the indicator_config dictionary.
+        """
         suffix = '_ASFiNAG' if to_suffix else ''
         
+        # Dictionary containing the configuration for each indicator
         indicator_config = {
             'Safety': (['Transverse_Evenness', 'Skid_Resistance'], []),
             'Comfort': (['Longitudinal_Evenness', 'Surface_Defects'], []),
             'Functional': (['Safety', 'Comfort'], []),
-            'Surface_Structural': (['Cracking', 'Surface_Defects', 'Transverse_Evenness', 'Longitudinal_Evenness'], ['Age', 'Asphalt_Thickness']),
-            'Structural': (['Surface_Structural', 'Bearing_Capacity'], ['Asphalt_Thickness', 'Total_Pavement_Thickness']),
-            'Global': (['Functional', 'Structural'], ['Street_Category']),
+            'Surface_Structural': (['Cracking', 'Surface_Defects', 'Transverse_Evenness', 'Longitudinal_Evenness'], 
+                                   ['age', 'asphalt_surface_thickness']),
+            'Structural': (['Surface_Structural', 'Bearing_Capacity'], ['asphalt_surface_thickness', 'total_pavement_thickness']),
+            'Global': (['Functional', 'Structural'], ['street_category']),
         }
         
         if indicator in indicator_config:
             columns, properties_needed = indicator_config[indicator]
-            return self._combine_indicator(df_inspections, indicator, columns, properties_needed, suffix)
+            return self._combine_indicator(inspections, indicator, columns, properties_needed, suffix)
         else:
             raise ValueError(f"Unknown indicator: {indicator}")
+
 
 ##############################################################################
             

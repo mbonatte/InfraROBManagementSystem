@@ -7,25 +7,26 @@ from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
 
 class TestASFiNAG(unittest.TestCase):
 
-    def setUp(self):
-        df_properties = {'Section_Name': ['road_1', 'road_2'],
-                                       'Asphalt_Thickness': [3, 4],
-                                       'Total_Pavement_Thickness': [10, 12],
-                                       'Street_Category': ['highway', 'country_road'],
-                                       'Age': ['01/01/2013', '01/01/2010'],
-                                       }
+    def setUp(self):        
+        properties = {
+            'name': 'road_1',
+            'asphalt_surface_thickness': 4,
+            'total_pavement_thickness': 12,
+            'street_category': 'highway',
+            'age': 1,
+            }
         
-        self.organization = ASFiNAG(df_properties)
+        self.organization = ASFiNAG(properties)
         
-        self.df_inspections = {'Section_Name': ['road_1', 'road_2'],
-                                            'Date': ['01/01/2014', '01/01/2011'],
-                                            'Cracking': [0, 20],
-                                            'Surface_Defects': [0, 30],
-                                            'Transverse_Evenness': [0, 20],
-                                            'Longitudinal_Evenness': [1, 3],
-                                            'Skid_Resistance': [.75, 0.6],
-                                            'Bearing_Capacity': [.5, 8]
-                                           }
+        self.inspections = {
+            'Date': ['01/01/2014', '01/01/2011'],
+            'Cracking': [0, 20],
+            'Surface_Defects': [0, 30],
+            'Transverse_Evenness': [0, 20],
+            'Longitudinal_Evenness': [1, 3],
+            'Skid_Resistance': [.75, 0.6],
+            'Bearing_Capacity': [.5, 8]
+            }
         
     def test_standardize_functions_single_value(self):    
         ZG_SR = np.array(10)
@@ -303,10 +304,10 @@ class TestASFiNAG(unittest.TestCase):
         result = self.organization.combine_indicator(indicator, df_inspections)
         np.testing.assert_allclose(result, expected, rtol=1e-05)
         
-    def test_transform_performace_indicators(self):
+    def test_transform_performance_indicators(self):
         indicators = self.organization.single_performance_index.keys()
         
-        df = self.organization.transform_performace_indicators(self.df_inspections)
+        df = self.organization.transform_performance_indicators(self.inspections)
         
         np.testing.assert_array_almost_equal(df['Cracking_ASFiNAG'], [1,5])
         np.testing.assert_array_almost_equal(df['Surface_Defects_ASFiNAG'], [1,4])
@@ -314,11 +315,13 @@ class TestASFiNAG(unittest.TestCase):
         np.testing.assert_array_almost_equal(df['Longitudinal_Evenness_ASFiNAG'], [2,3])
         np.testing.assert_array_almost_equal(df['Skid_Resistance_ASFiNAG'], [1,2])
         np.testing.assert_array_almost_equal(df['Bearing_Capacity_ASFiNAG'], [1,4])
+        
         np.testing.assert_array_almost_equal(df['Safety_ASFiNAG'], [1,5])
         np.testing.assert_array_almost_equal(df['Comfort_ASFiNAG'], [2,4])
         np.testing.assert_array_almost_equal(df['Functional_ASFiNAG'], [2,5])
         np.testing.assert_array_almost_equal(df['Surface_Structural_ASFiNAG'], [1,5])
         np.testing.assert_array_almost_equal(df['Structural_ASFiNAG'], [1,4])
+        
         np.testing.assert_array_almost_equal(df['Global_ASFiNAG'], [2,5])
         
        

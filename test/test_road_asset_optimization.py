@@ -96,14 +96,15 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
             filtered_actions = InfraROBRoadProblem.extract_indicator(key, actions)
             performance_models[key] = Performance(markov, filtered_actions)
 
-        
-        df_properties = {'Section_Name': ['road_1'],
-                              'Asphalt_Thickness': [3],
-                              'Street_Category': ['highway'],
-                              'Age': ['01/01/2013'],
-                              }
+        properties = {
+            'name': 'road_1',
+            'asphalt_surface_thickness': 5,
+            'total_pavement_thickness': 5,
+            'street_category': 'highway',
+            'age': 10,
+            }
 
-        organization = ASFiNAG(df_properties)
+        organization = ASFiNAG(properties)
         
         problem = InfraROBRoadProblem(performance_models, organization, time_horizon=20)
         

@@ -14,26 +14,26 @@ class Organization(ABC):
 
     Attributes:
         properties (pd.DataFrame): Dataframe containing the properties relevant to the organization.
-    
-    Methods:
-        calculate_PI_from_TC(indicator, value): Abstract method for calculating performance indicators from test conditions.
-        get_combined_indicator(combined_indicator, all_indicators, **kwargs): Abstract method for getting combined indicators.
     """
     
     @staticmethod
     def set_organization(organization):
+        """Return an instance of the specified organization class."""
         from . import ASFiNAG
         from . import COST_354
-        list_of_organizations = {'ASFiNAG': ASFiNAG.ASFiNAG,
-                                 'COST_354': COST_354.COST_354}
-        return list_of_organizations[organization]
+        
+        organizations = {
+            'ASFiNAG': ASFiNAG.ASFiNAG,
+            'COST_354': COST_354.COST_354
+        }
+        return organizations[organization]
         
     def __init__(self, properties):
         """
         Initializes the Organization with the given properties.
 
         Parameters:
-            properties: containing properties relevant to the organization.
+            properties (pd.DataFrame): Dataframe containing the properties relevant to the organization.
         """
         self.properties = properties
     
@@ -50,9 +50,11 @@ class Organization(ABC):
         pass
     
     def _add_suffix(self, columns, suffix):
+        """Add a suffix to a list of column names."""
         return [f"{column}{suffix}" for column in columns]
     
     def _calculate_dates_difference_in_years(self, start_date_str, end_date_str):
+        """Calculate the difference between two dates in years."""
         start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
         end_date = datetime.strptime(end_date_str, "%d/%m/%Y")
         return round((end_date - start_date).days / 365)
@@ -61,16 +63,17 @@ class Organization(ABC):
         return self.transformation_functions[indicator](value)
         
     def get_combined_indicator(self, combined_indicator, all_indicators, **kwargs):
+        """Get a combined performance indicator."""
         indicators = [all_indicators[indicator] for indicator in self.combined_performance_index[combined_indicator]]
         return self.combination_functions[combined_indicator](*indicators, **kwargs)
     
     def combine_peformance_indicators(self,indicator,df_inspections,to_suffix=True):
+        """Combine performance indicators."""
         logging.debug(f'Combining | {indicator}')
-        #self.combination_functions[indicator](df_inspections)
         return self.combine_indicator(indicator,df_inspections,to_suffix)
         
     
-    def transform_performace_indicator(self,
+    def transform_performance_indicator(self,
                                          indicator: str, 
                                          inspections: list):
         logging.debug(f'{self.__class__.__name__} | {indicator}')
@@ -84,14 +87,14 @@ class Organization(ABC):
             indicator_values = self.combine_peformance_indicators(indicator,inspections)
             return self.standardize_values(indicator_values).astype(int)
         
-    def transform_performace_indicators(self, inspections):
+    def transform_performance_indicators(self, inspections):
         logging.debug(f'{self.__class__.__name__} | Performance Indicators')
         indicators = {**self.single_performance_index, 
                       **self.combined_performance_index
                       }
         for indicator in indicators:
             try:
-                indicator_transformed = self.transform_performace_indicator(indicator,
+                indicator_transformed = self.transform_performance_indicator(indicator,
                                                                             inspections)
                 column_name = f'{indicator}_{self.__class__.__name__}'
                 inspections[column_name] = indicator_transformed
