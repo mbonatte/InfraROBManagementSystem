@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from InfraROBManagementSystem.convert.COST_354 import COST_354
+from InfraROBManagementSystem.organization.COST_354 import COST_354
       
 class TestCOST_354(unittest.TestCase):
 

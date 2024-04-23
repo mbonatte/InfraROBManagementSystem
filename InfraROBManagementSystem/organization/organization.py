@@ -13,7 +13,7 @@ class Organization(ABC):
     according to the organization-specific methodologies.
 
     Attributes:
-        properties (pd.DataFrame): Dataframe containing the properties relevant to the organization.
+        properties : The properties relevant to the organization.
     """
     
     @staticmethod
@@ -57,7 +57,10 @@ class Organization(ABC):
         """Calculate the difference between two dates in years."""
         start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
         end_date = datetime.strptime(end_date_str, "%d/%m/%Y")
-        return round((end_date - start_date).days / 365)
+        years = round((end_date - start_date).days / 365)
+        if years < 0:
+            raise ValueError('Years cannot be negative.')
+        return years
     
     def calculate_PI_from_TC(self, indicator, value):
         return self.transformation_functions[indicator](value)
@@ -102,7 +105,7 @@ class Organization(ABC):
                 logging.warning(e)
         
         return inspections
-            
+    
     def standardize_values(self, indicator_values):
         conditions = [indicator_values < 1.5,
                       ((1.5 <= indicator_values) & (indicator_values < 2.5)),

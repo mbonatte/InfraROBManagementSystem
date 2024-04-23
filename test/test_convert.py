@@ -3,10 +3,10 @@ import random
 
 import numpy as np
 
-from InfraROBManagementSystem.convert.organization import Organization
+from InfraROBManagementSystem.organization.organization import Organization
 
-from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
-from InfraROBManagementSystem.convert.COST_354 import COST_354
+from InfraROBManagementSystem.organization.ASFiNAG import ASFiNAG
+from InfraROBManagementSystem.organization.COST_354 import COST_354
 
 class newOrganization(Organization):
     def single_performance_index(self):
@@ -17,7 +17,12 @@ class newOrganization(Organization):
 class TestOrganization(unittest.TestCase):
 
     def setUp(self):
-        self.org = newOrganization({})
+        self.org = newOrganization({
+            'name': 'road_1',
+            'asphalt_surface_thickness': 4,
+            'total_pavement_thickness': 12,
+            'street_category': 'highway',
+            })
         
     def test_standardize_values(self):
         indicator_values = np.array([0.5,
@@ -43,6 +48,7 @@ class TestOrganization(unittest.TestCase):
         expected = 2
         result = self.org._calculate_dates_difference_in_years(start_date_str, end_date_str)
         self.assertEqual(result, expected, "Date difference in years was not calculated correctly")
+
 
 if __name__ == '__main__':
     unittest.main()

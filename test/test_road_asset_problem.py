@@ -7,7 +7,7 @@ from ams.prediction.markov import MarkovContinous
 from ams.performance.performance import Performance
 from ams.optimization.multi_objective_optimization import Multi_objective_optimization
 
-from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
+from InfraROBManagementSystem.organization.ASFiNAG import ASFiNAG
 from InfraROBManagementSystem.optimization.problem import InfraROBRoadProblem
 
 
@@ -79,7 +79,7 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
             'asphalt_surface_thickness': 5,
             'total_pavement_thickness': 5,
             'street_category': 'highway',
-            'age': 10,
+            'date_asphalt_surface': '01/01/2010',
             }
 
         organization = ASFiNAG(properties)
@@ -134,9 +134,9 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         self.assertAlmostEqual(area_under_curve['Safety'], 57.55, delta=1e-5)
         self.assertAlmostEqual(area_under_curve['Comfort'], 36.22342857142857, delta=1e-5)
         self.assertAlmostEqual(area_under_curve['Functional'], 59.07234285714286, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Surface_Structural'], 41.315224191736604, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Structural'], 32.507612095868296, delta=1e-5)
-        self.assertAlmostEqual(area_under_curve['Global'], 59.07234285714286, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Surface_Structural'], 48.33354, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Structural'], 36.01677, delta=1e-5)
+        self.assertAlmostEqual(area_under_curve['Global'], 59.367871357142846, delta=1e-5)
 
         random.seed(1)
         performance = self.problem._evaluate_performance([self.action_binary])[0]
@@ -235,7 +235,7 @@ class TestASFiNAGProblemProblem(unittest.TestCase):
         random.seed(1)
         self.problem._evaluate([self.action_binary], out)
 
-        self.assertAlmostEqual(out['F'][0][0], 54.60277142857143, delta=1e-5)
+        self.assertAlmostEqual(out['F'][0][0], 55.16336098571429, delta=1e-5)
         self.assertAlmostEqual(out['F'][1][0], 16.0243, places=3)  
 
 if __name__ == '__main__':

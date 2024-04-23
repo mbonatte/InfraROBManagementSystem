@@ -27,7 +27,7 @@ setup(
     
     # Packaging
     packages =['InfraROBManagementSystem',
-               'InfraROBManagementSystem.convert',
+               'InfraROBManagementSystem.organization',
                'InfraROBManagementSystem.optimization'],
     
 )

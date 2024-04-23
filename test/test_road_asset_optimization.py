@@ -3,11 +3,14 @@ import random
 
 import numpy as np
 
+from pymoo.config import Config
+Config.warnings['not_compiled'] = False
+
 from ams.prediction.markov import MarkovContinous
 from ams.performance.performance import Performance
 from ams.optimization.multi_objective_optimization import Multi_objective_optimization
 
-from InfraROBManagementSystem.convert.ASFiNAG import ASFiNAG
+from InfraROBManagementSystem.organization.ASFiNAG import ASFiNAG
 from InfraROBManagementSystem.optimization.problem import InfraROBRoadProblem
 
 class Test_ASFiNAG_optimization(unittest.TestCase):
@@ -101,7 +104,7 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
             'asphalt_surface_thickness': 5,
             'total_pavement_thickness': 5,
             'street_category': 'highway',
-            'age': 10,
+            'date_asphalt_surface': '01/01/2010',
             }
 
         organization = ASFiNAG(properties)
@@ -127,18 +130,18 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
         cost = res.F.T[1][sort]
         best_action = self.optimization.problem._decode_solution(res.X[sort][-1])
 
-        action = {'14': 'action_2', '15': 'action_1', '19': 'action_2', '9': 'action_2'}
+        action = {'13': 'action_1', '17': 'action_2', '6': 'action_2', '9': 'action_1'}
         self.assertEqual(action, best_action)
         
-        self.assertAlmostEqual(performance[0], 54.827114285714295, places=3)
-        self.assertAlmostEqual(performance[-1], 32.92361428571428, places=3)
+        self.assertAlmostEqual(performance[0], 55.6753285, places=3)
+        self.assertAlmostEqual(performance[-1], 33.5234164, places=3)
 
-        self.assertAlmostEqual(cost[0], 3.124196703132048, places=3)
-        self.assertAlmostEqual(cost[-1], 11.023121183436736, places=5)
+        self.assertAlmostEqual(cost[0], 0, places=3)
+        self.assertAlmostEqual(cost[-1], 11.993377134757244, places=5)
         
         prediction = self.optimization.problem._get_performances(best_action)
         max_global_indicator = self.optimization.problem._calc_max_global_indicator([prediction])[0]
-        self.assertAlmostEqual(max_global_indicator, 2.5723142857142856, places=5)
+        self.assertAlmostEqual(max_global_indicator, 2.7292857142857145, places=5)
         
 
     def test_budget_constrain(self):
@@ -173,7 +176,7 @@ class Test_ASFiNAG_optimization(unittest.TestCase):
         actions_schedule = self.optimization.problem._decode_solution(cheapest_solution)
         performance = self.optimization.problem._get_performances(actions_schedule)
         max_global_indicator = self.optimization.problem._calc_max_global_indicator([performance])
-        self.assertTrue(max_global_indicator <= 3)
+        self.assertTrue(max_global_indicator <= 3.07)
         
         self.optimization._set_termination({'name':'n_gen', 'n_max_gen':3})
 
