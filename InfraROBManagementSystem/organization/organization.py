@@ -39,6 +39,18 @@ class Organization(ABC):
     
     @property
     @abstractmethod
+    def worst_IC(self):
+        """Abstract property to define the worst Index Condition."""
+        pass
+    
+    @property
+    @abstractmethod
+    def best_IC(self):
+        """Abstract property to define the best Index Condition."""
+        pass
+
+    @property
+    @abstractmethod
     def single_performance_index(self):
         """Abstract property to define single performance indicators."""
         pass

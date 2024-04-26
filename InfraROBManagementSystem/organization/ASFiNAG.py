@@ -293,6 +293,9 @@ class ASFiNAG(Organization):
         'Structural': (['Surface_Structural', 'Bearing_Capacity'], ['asphalt_surface_thickness', 'total_pavement_thickness']),
         'Global': (['Functional', 'Structural'], ['street_category']),
     }
+
+    worst_IC = 5
+    best_IC = 1
     
     def __init__(self, properties):
         super().__init__(properties)

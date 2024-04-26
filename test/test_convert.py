@@ -9,6 +9,10 @@ from InfraROBManagementSystem.organization.ASFiNAG import ASFiNAG
 from InfraROBManagementSystem.organization.COST_354 import COST_354
 
 class newOrganization(Organization):
+    def worst_IC(self):
+        pass
+    def best_IC(self):
+        pass
     def single_performance_index(self):
         pass
     def combined_performance_index(self):

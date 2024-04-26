@@ -50,6 +50,9 @@ class COST_354(organization.Organization):
                                   #  'Functional': ['Safety',
                                   #                 'Comfort'],
                                   }
+    worst_IC = 5
+    best_IC = 0
+    
     def __init__(self, properties):
         super().__init__(properties)
         self.p = 0.2
