@@ -27,56 +27,9 @@ from . import organization
 """
 
 class COST_354(organization.Organization):
-    single_performance_index = {
-                                'Longitudinal_Evenness':'Longitudinal_Evenness',
-                                'Transverse_Evenness':  'Transverse_Evenness',
-                                'Skid_Resistance':      'Skid_Resistance',
-                                'Macro_Texture':        'Macro_Texture',
-                                'Bearing_Capacity':     'Bearing_Capacity',
-                                'Cracking':             'Cracking',
-                                'Surface_Defects':      'Surface_Defects',
-                                }
-    combined_performance_index = {#'Safety':     ['Rutting',
-                                  #               'Grip'],
-                                  # 'Comfort':    {'Minimum': ['Longitudinal_Evenness'],
-                                  #                'Standard': ['Longitudinal_Evenness',
-                                  #                             'Surface_Defects',
-                                  #                             'Transverse_Evenness'],
-                                  #                'Optimum': ['Longitudinal_Evenness',
-                                  #                             'Surface_Defects',
-                                  #                             'Transverse_Evenness',
-                                  #                             'Macro_Texture',
-                                  #                             'Cracking']},
-                                  #  'Functional': ['Safety',
-                                  #                 'Comfort'],
-                                  }
-    worst_IC = 5
-    best_IC = 0
     
-    def __init__(self, properties):
-        super().__init__(properties)
-        self.p = 0.2
-        self.alternative = '1'
-        self.transformation_functions = {
-                                        'Cracking': self.transform_cracking,
-                                        'Surface_Defects': self.transform_surface_damage,
-                                        'Transverse_Evenness': self.transform_transversal_evenness,
-                                        'Longitudinal_Evenness': self.transform_longitudinal_evenness,
-                                        'Macro_Texture': self.transform_macro_texture,
-                                        'Skid_Resistance': self.transform_skid_resistance,
-                                        'Bearing_Capacity': self.transform_bearing_capacity,
-                                        }
-        self.combination_functions = {
-                                    #'Safety': self.safety_performance_index,
-                                    'Comfort': self.comfort_performance_index,
-                                    # 'Functional': self.functional_condition_index,
-                                    # 'Structural': self.structural_condition_index,
-                                    # 'Bearing_Capacity': self.bearing_capacity_condition_index,
-                                    }
-    
-##############################################################################
-
-    def transform_longitudinal_evenness(self, TP_IRI, number=1):
+    @staticmethod
+    def transform_longitudinal_evenness(TP_IRI, number):
         #Transformation [1] was developed to create a more restrictive range
         if number == 1:
             PI_E = (0.1733 * TP_IRI**2 
@@ -88,7 +41,8 @@ class COST_354(organization.Organization):
         PI_E = np.where(PI_E < 0, 0, PI_E)
         return PI_E
 
-    def transform_transversal_evenness(self, TP_TD, number=2):
+    @staticmethod
+    def transform_transversal_evenness(TP_TD, number):
         """
         Transformation [1] can be used for all road classes.
         Transformation [2] should only be used for motorways and primary roads.
@@ -105,7 +59,8 @@ class COST_354(organization.Organization):
                     + 0.2142 * TP_TD)
         return np.where(PI_R > 5, 5, PI_R)
     
-    def transform_macro_texture(self, TP_T, street_category):
+    @staticmethod
+    def transform_macro_texture(TP_T, street_category):
         """
         Transformation [1] is suitable for Motorway and Primary roads.
         Transformation [2] is suitable for Secondary roads.
@@ -116,7 +71,8 @@ class COST_354(organization.Organization):
             PI_T = 7.0 - 6.9 * TP_T 
         return np.where(PI_T > 5, 5, PI_T)
     
-    def transform_skid_resistance(self, TP_F, device):
+    @staticmethod
+    def transform_skid_resistance(TP_F, device):
         """
         Transformation [1] should only be used for SFC devices running at 60km/h.
         Transformation [2] should only be used for LFC devices running at 50km/h.
@@ -127,7 +83,8 @@ class COST_354(organization.Organization):
             PI_F = -13.875 * TP_F + 9.338
         return np.where(PI_F > 5, 5, PI_F)
     
-    def transform_bearing_capacity(self, TP_B, device, base):
+    @staticmethod
+    def transform_bearing_capacity(TP_B, device, base):
         """
         """
         if device == 'R/D':
@@ -138,26 +95,78 @@ class COST_354(organization.Organization):
             PI_B = TP_B / 253
         return np.where(PI_B > 5, 5, PI_B)
     
-    def transform_cracking(self, TP_CR, street_category):
+    @staticmethod
+    def transform_cracking(TP_CR, street_category):
         if street_category == ('Highway' or 'Motorway'):
             PI_CR = 0.16 * TP_CR
         else:
             PI_CR = 0.1333 * TP_CR
         return np.where(PI_CR > 5, 5, PI_CR)
 
-    def transform_surface_damage(self, TP_SD):
+    @staticmethod
+    def transform_surface_damage(TP_SD):
         PI_SD = 0.1333 * TP_SD
         return np.where(PI_SD > 5, 5, PI_SD)
+    
+    single_performance_index = {
+        'Longitudinal_Evenness':'Longitudinal_Evenness',
+        'Transverse_Evenness':  'Transverse_Evenness',
+        'Skid_Resistance':      'Skid_Resistance',
+        'Macro_Texture':        'Macro_Texture',
+        'Bearing_Capacity':     'Bearing_Capacity',
+        'Cracking':             'Cracking',
+        'Surface_Defects':      'Surface_Defects',
+    }
+    
+    combined_performance_index = {
+        'Safety':     ['Rutting', 'Grip'],
+        'Comfort':    {'Minimum': ['Longitudinal_Evenness'],
+                       'Standard': ['Longitudinal_Evenness','Surface_Defects','Transverse_Evenness'],
+                       'Optimum': ['Longitudinal_Evenness','Surface_Defects','Transverse_Evenness','Macro_Texture','Cracking']},
+         'Functional': ['Safety', 'Comfort'],
+    }
+    
+    worst_IC = 5
+    best_IC = 0
+    
+    def __init__(self, properties):
+        super().__init__(properties)
+        # self.influence_factor = 0.2
+        # self.alternative = '1'
+        
+        self.transformation_functions = {
+            'Cracking': self.transform_cracking,
+            'Surface_Defects': self.transform_surface_damage,
+            'Transverse_Evenness': self.transform_transversal_evenness,
+            'Longitudinal_Evenness': self.transform_longitudinal_evenness,
+            'Macro_Texture': self.transform_macro_texture,
+            'Skid_Resistance': self.transform_skid_resistance,
+            'Bearing_Capacity': self.transform_bearing_capacity,
+        }
+        
+        self.combination_functions = {
+            # 'Safety': self.safety_performance_index,
+            'Comfort': self.comfort_performance_index,
+            # 'Functional': self.functional_condition_index,
+            # 'Structural': self.structural_condition_index,
+            # 'Bearing_Capacity': self.bearing_capacity_condition_index,
+        }
+
+    
     
 ##############################################################################
 
     def define_level(self, indicator, peformance_indices):
         levels = ['Optimum', 'Standard', 'Minimum']
+        print(peformance_indices.columns)
         for level in levels:
+            print(f"{level=}")
+            print(f"{indicator=}")
             indicators = self.combined_performance_index[indicator][level]
-            for i,indicator in enumerate(indicators):
-                indicator += '_' + self.__class__.__name__
-                indicators[i] = indicator
+            for i,ind in enumerate(indicators):
+                ind += '_' + self.__class__.__name__
+                indicators[i] = ind
+            print(f"{indicators=}")
             if set(indicators).issubset(set(peformance_indices.columns)):
                 return level
     
@@ -165,20 +174,23 @@ class COST_354(organization.Organization):
         pass
 
     def get_combined_performance_index(self, indicator, peformance_indices):
+        print('get_combined_performance_index')
         level = self.define_level(indicator, peformance_indices)
+        print(peformance_indices)
         return self.combined_performance_index[indicator][level]
 
     def comfort_performance_index(self, df_inspections):
-        weights = {'Longitudinal_Evenness_COST_354': 1.0,
-                    'Surface_Defects_COST_354': 0.6,
-                    'Transverse_Evenness_COST_354': 0.7,
-                    'Macro_Texture_COST_354':0.4,
-                    'Cracking_COST_354':0.5}
+        weights = {'Longitudinal_Evenness': 1.0,
+                    'Surface_Defects': 0.6,
+                    'Transverse_Evenness': 0.7,
+                    'Macro_Texture':0.4,
+                    'Cracking':0.5}
+        
         level = self.define_level('Comfort', df_inspections)
         combination = self.combined_performance_index['Comfort'][level]
         try:
             for indicator in combination:
-                #print(indicator)
+                print(f"{indicator=}")
                 weight = weights[indicator]
                 indicator_index = df_inspections[indicator].astype(float)
                 multiply = list(indicator_index*weight)
